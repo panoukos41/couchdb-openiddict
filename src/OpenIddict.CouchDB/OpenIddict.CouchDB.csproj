@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>P41.OpenIddict.CouchDB</PackageId>
+    <Authors>panoukos41</Authors>
+    <PackageDescription>
+      CouchDB store provider for the OpenIddict project using CouchDB.NET.
+    </PackageDescription>
+    <PackageTags>
+      openiddict;couchdb;aspnetcore;dotnet;csharp
+    </PackageTags>
+    
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/panoukos41/couchdb-openiddict</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CouchDB.NET" Version="2.1.0" />
+    <PackageReference Include="OpenIddict.Core" Version="3.0.1" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+</Project>
