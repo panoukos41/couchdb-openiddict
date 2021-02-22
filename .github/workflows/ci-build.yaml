@@ -1,0 +1,48 @@
+name: Build
+env:
+  DOTNET_NOLOGO: true
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".github/**"
+      - ".gitignore"
+      - "ddocs/**"
+      - "global.json"
+      - "**/*.sln"
+      - "**/*.props"
+      - "**/*.md"
+      - "**/*.csproj"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install .NET 5.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "5.0.x"
+
+      - name: Install Dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Pack
+        run: dotnet pack -c Release -o out --no-build --include-symbols
+
+      - name: Publish to NuGet
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
+          SOURCE_URL: https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "out/*.nupkg" --skip-duplicate -s ${{ env.SOURCE_URL }} -k ${{ env.NUGET_AUTH_TOKEN }}
