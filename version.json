@@ -1,0 +1,9 @@
+{
+  "version": "0.1-beta",
+  "publicReleaseRefSpec": [
+    "^refs/heads/main$"
+  ],
+  "nugetPackageVersion": {
+    "semVer": 2
+  }
+}
