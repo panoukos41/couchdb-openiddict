@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.6.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{8DE4C454-34A6-4625-AC74-E8D4345E789C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+		version.json = version.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{09067494-2EBA-4E64-BD88-F66C1939509F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C9CF5A3A-BEA6-4E86-934A-4A47D2A61366}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenIddict.CouchDB", "src\OpenIddict.CouchDB\OpenIddict.CouchDB.csproj", "{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{930A1CC8-E4F1-4E6F-AC0F-86C31776D2F1} = {09067494-2EBA-4E64-BD88-F66C1939509F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1215892D-3DA7-4BE4-99BD-89489E787208}
+	EndGlobalSection
+EndGlobal
