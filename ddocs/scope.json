@@ -1,0 +1,16 @@
+{
+    "_id": "_design/scope",
+    "language": "javascript",
+    "views": {
+        "all": {
+            "map": "function (doc) {\n  if (doc.discriminator == 'openiddict.scope') {\n    emit(doc._id, 1);\n  }\n}"
+        },
+        "name": {
+            "map": "function (doc) {\n  if (doc.discriminator == 'openiddict.scope') {\n    emit(doc.name, 1);\n  }\n}"
+        },
+        "count": {
+            "reduce": "_count",
+            "map": "function (doc) {\n  if (doc.discriminator == 'openiddict.scope') {\n    emit(doc._id, 1);\n  }\n}"
+        }
+    }
+}

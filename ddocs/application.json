@@ -1,0 +1,13 @@
+{
+    "_id": "_design/application",
+    "language": "javascript",
+    "views": {
+        "all": {
+            "map": "function (doc) {\n  if (doc.discriminator == 'openiddict.application') {\n    emit(doc._id, 1);\n  }\n}"
+        },
+        "count": {
+            "reduce": "_count",
+            "map": "function (doc) {\n  if (doc.discriminator == 'openiddict.application') {\n    emit(doc._id, 1);\n  }\n}"
+        }
+    }
+}
