@@ -27,10 +27,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
         public static OpenIddictCouchDbBuilder UseCouchDb(this OpenIddictCoreBuilder builder)
         {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Check.NotNull(builder, nameof(builder));
 
             // Note: Mongo uses simple binary comparison checks by default so the additional
             // query filtering applied by the default OpenIddict managers can be safely disabled.
@@ -67,15 +64,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static OpenIddictCoreBuilder UseCouchDb(
             this OpenIddictCoreBuilder builder, Action<OpenIddictCouchDbBuilder> configuration)
         {
-            if (builder is null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
+            Check.NotNull(builder, nameof(builder));
+            Check.NotNull(configuration, nameof(configuration));
 
             configuration(builder.UseCouchDb());
 

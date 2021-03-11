@@ -54,7 +54,6 @@ namespace OpenIddict.CouchDB.Internal
             public static View<string, int, TAuthorization> Subject { get; set; } =
                 View<string, int, TAuthorization>.Create("authorization", "subject");
 
-            
             /// <summary>
             /// Key = [ CreationDate, ExpirationDate ] , Value = Rev
             /// </summary>

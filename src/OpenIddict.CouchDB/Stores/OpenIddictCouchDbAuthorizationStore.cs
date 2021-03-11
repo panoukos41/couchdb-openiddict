@@ -61,10 +61,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual ValueTask<long> CountAsync<TResult>(
             Func<IQueryable<TAuthorization>, IQueryable<TResult>> query, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return new(query(QueryDb()).LongCount());
         }
@@ -72,10 +69,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual async ValueTask CreateAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             await GetDatabase().AddAsync(authorization, cancellationToken: cancellationToken);
         }
@@ -83,10 +77,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual async ValueTask DeleteAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             try
             {
@@ -325,10 +316,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetApplicationIdAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (string.IsNullOrEmpty(authorization.ApplicationId))
             {
@@ -343,10 +331,7 @@ namespace OpenIddict.CouchDB.Stores
             Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
         }
@@ -354,10 +339,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<DateTimeOffset?> GetCreationDateAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (authorization.CreationDate is null)
             {
@@ -370,10 +352,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetIdAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             return new ValueTask<string?>(authorization.Id.ToString());
         }
@@ -381,10 +360,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (authorization.Properties is null)
             {
@@ -405,10 +381,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableArray<string>> GetScopesAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (authorization.Scopes is null || authorization.Scopes.Count == 0)
             {
@@ -421,10 +394,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetStatusAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             return new ValueTask<string?>(authorization.Status);
         }
@@ -432,10 +402,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetSubjectAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             return new ValueTask<string?>(authorization.Subject);
         }
@@ -443,10 +410,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetTypeAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             return new ValueTask<string?>(authorization.Type);
         }
@@ -489,10 +453,7 @@ namespace OpenIddict.CouchDB.Stores
             Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return ExecuteAsync(cancellationToken);
 
@@ -582,10 +543,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual ValueTask SetApplicationIdAsync(TAuthorization authorization,
             string? identifier, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (!string.IsNullOrEmpty(identifier))
             {
@@ -603,10 +561,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual ValueTask SetCreationDateAsync(TAuthorization authorization,
             DateTimeOffset? date, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             authorization.CreationDate = date?.UtcDateTime;
 
@@ -617,10 +572,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual ValueTask SetPropertiesAsync(TAuthorization authorization,
             ImmutableDictionary<string, JsonElement> properties, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (properties is null || properties.IsEmpty)
             {
@@ -656,10 +608,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual ValueTask SetScopesAsync(TAuthorization authorization,
             ImmutableArray<string> scopes, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             if (scopes.IsDefaultOrEmpty)
             {
@@ -676,10 +625,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask SetStatusAsync(TAuthorization authorization, string? status, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             authorization.Status = status;
 
@@ -689,10 +635,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask SetSubjectAsync(TAuthorization authorization, string? subject, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             authorization.Subject = subject;
 
@@ -702,10 +645,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual ValueTask SetTypeAsync(TAuthorization authorization, string? type, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             authorization.Type = type;
 
@@ -715,10 +655,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual async ValueTask UpdateAsync(TAuthorization authorization, CancellationToken cancellationToken)
         {
-            if (authorization is null)
-            {
-                throw new ArgumentNullException(nameof(authorization));
-            }
+            Check.NotNull(authorization, nameof(authorization));
 
             var db = GetDatabase();
             try
