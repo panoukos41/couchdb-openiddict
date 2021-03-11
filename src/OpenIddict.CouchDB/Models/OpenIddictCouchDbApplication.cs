@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CouchDB.Driver.Types;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -11,10 +12,8 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict application.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; ClientId = {ClientId,nq} ; Type = {Type,nq}")]
-    public class OpenIddictCouchDbApplication : OpenIddictCouchDocument
+    public class OpenIddictCouchDbApplication : CouchDocument
     {
-        public override string Discriminator { get; set; } = "openiddict.application";
-
         /// <summary>
         /// Gets or sets the client identifier associated with the current application.
         /// </summary>

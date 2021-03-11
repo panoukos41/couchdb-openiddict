@@ -1,11 +1,8 @@
-﻿namespace OpenIddict.CouchDB.Models
+﻿using CouchDB.Driver.Types;
+
+namespace OpenIddict.CouchDB.Models
 {
-    public class CouchDocumentEmpty : OpenIddictCouchDocument
+    public class CouchDocumentEmpty : CouchDocument
     {
-        public override string Discriminator
-        {
-            get => throw new System.NotImplementedException("This class is not meant to be used for queries.");
-            set => throw new System.NotImplementedException("This class is not meant to be used for queries.");
-        }
     }
 }

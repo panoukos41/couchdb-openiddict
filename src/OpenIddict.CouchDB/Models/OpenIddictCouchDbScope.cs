@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CouchDB.Driver.Types;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -11,10 +12,8 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict scope.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Name = {Name,nq}")]
-    public class OpenIddictCouchDbScope : OpenIddictCouchDocument
+    public class OpenIddictCouchDbScope : CouchDocument
     {
-        public override string Discriminator { get; set; } = "openiddict.scope";
-
         /// <summary>
         /// Gets or sets the public description associated with the current scope.
         /// </summary>
