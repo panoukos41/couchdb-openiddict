@@ -44,7 +44,7 @@ namespace OpenIddict.CouchDB.Stores.Internal
         /// </summary>
         /// <typeparam name="T">The type to serialize/deserialize to/from.</typeparam>
         /// <returns>A 'database' class that serializes/deserializes classes to <typeparamref name="T"/>.</returns>
-        protected ICouchDatabase<T> GetDatabase<T>(string discriminator)
+        protected ICouchDatabase<T> GetDatabase<T>(string? discriminator = null)
             where T : CouchDocument
         {
             return Client.GetDatabase<T>(Options.CurrentValue.DatabaseName, discriminator);

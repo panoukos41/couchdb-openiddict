@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.CouchDB;
 using OpenIddict.CouchDB.Models;
 using OpenIddict.CouchDB.Resolvers;
+using OpenIddict.CouchDB.Stores;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection

@@ -6,13 +6,12 @@ namespace OpenIddict.CouchDB.Models
     public class CouchDocumentDelete : CouchDocument
     {
         [JsonProperty("_deleted")]
-        public bool Deleted { get; set; }
+        public bool Deleted { get; } = true;
 
-        public CouchDocumentDelete(string id, string rev, bool deleted = true)
+        public CouchDocumentDelete(string id, string rev)
         {
             Id = id;
             Rev = rev;
-            Deleted = deleted;
         }
     }
 }
