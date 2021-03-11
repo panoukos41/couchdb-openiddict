@@ -11,7 +11,7 @@ using System;
 using System.Collections.Concurrent;
 using SR = OpenIddict.Abstractions.OpenIddictResources;
 
-namespace OpenIddict.CouchDB
+namespace OpenIddict.CouchDB.Resolvers
 {
     /// <summary>
     /// Exposes a method allowing to resolve an authorization store.
