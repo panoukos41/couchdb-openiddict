@@ -1,0 +1,69 @@
+name: Release
+env: { DOTNET_NOLOGO: true }
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "!**/*.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with: { fetch-depth: 0 }
+
+      - name: Install .NET 5.0
+        uses: actions/setup-dotnet@v1
+        with: { dotnet-version: "5.0.x" }
+
+      - name: NBGV
+        uses: dotnet/nbgv@v0.4
+        id: nbgv
+        with: { setAllVars: true }
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Pack
+        run: dotnet pack -c Release -o out --no-build --include-symbols
+
+      - name: Create NuGet Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: nuget
+          path: out
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Create Release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: v${{ needs.build.outputs.nbgv }}
+          release_name: ${{ needs.build.outputs.nbgv }}
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Install .NET 5.0
+        uses: actions/setup-dotnet@v1
+        with: { dotnet-version: "5.0.x" }
+
+      - name: Download NuGet Packages
+        uses: actions/download-artifact@v2
+        with: { name: nuget }
+
+      - name: Publish to NuGet
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
+          SOURCE_URL: https://api.nuget.org/v3/index.json
+        run: dotnet nuget push **/*.nupkg --skip-duplicate -s ${{ env.SOURCE_URL }} -k ${{ env.NUGET_AUTH_TOKEN }}
