@@ -51,10 +51,15 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
-            return (await GetDatabase()
+            var value = (await GetDatabase()
                 .GetViewAsync(Views.Authorization<TAuthorization>.Count, cancellationToken: cancellationToken))
-                .FirstOrDefault()
-                ?.Value ?? 0;
+                .FirstOrDefault()?.Value;
+
+            if (long.TryParse(value, out long count))
+            {
+                return count;
+            }
+            return 0;
         }
 
         /// <inheritdoc/>
@@ -435,13 +440,14 @@ namespace OpenIddict.CouchDB.Stores
         {
             var options = new CouchViewOptions<string>
             {
+                Reduce = false,
                 IncludeDocs = true,
                 Limit = count,
                 Skip = offset ?? 0
             };
 
             foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Authorization<TAuthorization>.All, options, cancellationToken)
+                .GetViewAsync(Views.Authorization<TAuthorization>.Count, options, cancellationToken)
                 .ConfigureAwait(false))
             {
                 yield return row.Document;

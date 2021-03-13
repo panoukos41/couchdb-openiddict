@@ -11,36 +11,22 @@ namespace OpenIddict.CouchDB.Internal
             where TApplication : OpenIddictCouchDbApplication
         {
             /// <summary>
-            /// Key = Id, Value = 1, Document = Application
+            /// With reduce: Key = null, Value = Count <br/>
+            /// Without reduce: Key = Id, Value = Rev
             /// </summary>
-            /// <remarks>Using emit(doc._id, 1) and include_docs=true</remarks>
-            public static View<string, int, TApplication> All { get; set; } =
-                View<string, int, TApplication>.Create("application", "all");
-
-            /// <summary>
-            /// Key = null, Value = Count
-            /// </summary>
-            /// <remarks>Using reduce _count and emit(doc._id, 1)</remarks>
-            public static View<object, int, TApplication> Count { get; set; } =
-                View<object, int, TApplication>.Create("application", "count");
+            public static View<string, string, TApplication> Count { get; set; } =
+                View<string, string, TApplication>.Create("application", "count");
         }
 
         public static class Authorization<TAuthorization>
             where TAuthorization : OpenIddictCouchDbAuthorization
         {
             /// <summary>
-            /// Key = Id, Value = 1, Document = Authorization
+            /// With reduce: Key = null, Value = Count <br/>
+            /// Without reduce: Key = id, Value = Rev
             /// </summary>
-            /// <remarks>Using emit(doc._id, 1) and include_docs=true</remarks>
-            public static View<string, int, TAuthorization> All { get; set; } =
-                View<string, int, TAuthorization>.Create("authorization", "all");
-
-            /// <summary>
-            /// Key = null, Value = Count
-            /// </summary>
-            /// <remarks>Using reduce _count and emit(doc._id, 1)</remarks>
-            public static View<object, int, TAuthorization> Count { get; set; } =
-                View<object, int, TAuthorization>.Create("authorization", "count");
+            public static View<string, string, TAuthorization> Count { get; set; } =
+                View<string, string, TAuthorization>.Create("authorization", "count");
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
@@ -49,18 +35,14 @@ namespace OpenIddict.CouchDB.Internal
                 View<string, string, TAuthorization>.Create("authorization", "application_id");
 
             /// <summary>
-            /// Key = Subject, Value = 1
+            /// Key = Subject, Value = Rev
             /// </summary>
-            public static View<string, int, TAuthorization> Subject { get; set; } =
-                View<string, int, TAuthorization>.Create("authorization", "subject");
+            public static View<string, string, TAuthorization> Subject { get; set; } =
+                View<string, string, TAuthorization>.Create("authorization", "subject");
 
             /// <summary>
             /// Key = [ CreationDate, ExpirationDate ] , Value = Rev
             /// </summary>
-            /// <remarks>
-            /// if doc.status is not 'inactive' and 'valid'<br/>
-            /// then call emit([doc.creation_date, doc.expiration_date], doc._rev)
-            /// </remarks>
             public static View<DateTime[], string, TAuthorization> Prune { get; set; } =
                 View<DateTime[], string, TAuthorization>.Create("token", "prune");
         }
@@ -69,39 +51,28 @@ namespace OpenIddict.CouchDB.Internal
             where TScope : OpenIddictCouchDbScope
         {
             /// <summary>
-            /// Key = Id, Value = 1, Document = Scope
+            /// With reduce: Key = null, Value = Count <br/>
+            /// Without reduce: Key = Id, Value = Rev
             /// </summary>
-            /// <remarks>Using emit(doc._id, 1) and include_docs=true</remarks>
-            public static View<string, int, TScope> All { get; set; } =
-                View<string, int, TScope>.Create("scope", "all");
+            public static View<string, string, TScope> Count { get; set; } =
+                View<string, string, TScope>.Create("scope", "count");
 
             /// <summary>
-            /// Key = null, Value = Count
+            /// Key = Name, Value = Rev
             /// </summary>
-            /// <remarks>Using reduce _count and emit(doc._id, 1)</remarks>
-            public static View<string, int, TScope> Count { get; set; } =
-                View<string, int, TScope>.Create("scope", "count");
-
-            public static View<string, int, TScope> Name { get; set; } =
-                View<string, int, TScope>.Create("scope", "name");
+            public static View<string, string, TScope> Name { get; set; } =
+                View<string, string, TScope>.Create("scope", "name");
         }
 
         public static class Token<TToken>
             where TToken : OpenIddictCouchDbToken
         {
             /// <summary>
-            /// Key = Id, Value = 1, Document = Token
+            /// With reduce: Key = null, Value = Count <br/>
+            /// Without reduce: Key = Id, Value = Rev
             /// </summary>
-            /// <remarks>Using emit(doc._id, 1) and include_docs=true</remarks>
-            public static View<string, int, TToken> All { get; set; } =
-                View<string, int, TToken>.Create("token", "all");
-
-            /// <summary>
-            /// Key = null, Value = Count
-            /// </summary>
-            /// <remarks>Using reduce _count and emit(doc._id, 1)</remarks>
-            public static View<string, int, TToken> Count { get; set; } =
-                View<string, int, TToken>.Create("token", "count");
+            public static View<string, string, TToken> Count { get; set; } =
+                View<string, string, TToken>.Create("token", "count");
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
@@ -116,12 +87,9 @@ namespace OpenIddict.CouchDB.Internal
                 View<string, string, TToken>.Create("token", "authorization_id");
 
             /// <summary>
-            /// Key = [ CreationDate, ExpirationDate ] , Value = Rev
+            /// Key = [CreationDate, ExpirationDate] , Value = Rev
             /// </summary>
             /// <remarks>
-            /// if doc.status is not 'inactive' and 'valid'<br/>
-            /// then call emit([doc.creation_date, doc.expiration_date], doc._rev)
-            /// </remarks>
             public static View<DateTime[], string, TToken> Prune { get; set; } =
                 View<DateTime[], string, TToken>.Create("token", "prune");
         }
