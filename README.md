@@ -1,6 +1,6 @@
 # P41.OpenIddict.CouchDB
 
-[![GitHub Build Status](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/panoukos41/couchdb-openiddict/actions)
+[![Github Build Status](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/build.yaml/badge.svg)](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/build.yaml)
 [![Nuget](https://img.shields.io/nuget/v/P41.OpenIddict.CouchDB)](https://www.nuget.org/packages/P41.OpenIddict.CouchDB/)
 [![Nuget Downloads](https://img.shields.io/nuget/dt/P41.OpenIddict.CouchDB)](https://www.nuget.org/packages/P41.OpenIddict.CouchDB/)
 [![GitHub](https://img.shields.io/github/license/panoukos41/couchdb-openiddict)](https://github.com/panoukos41/couchdb-openiddict/blob/main/LICENSE.md)
