@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      nbgv: ${{ steps.nbgv.outputs.SemVer2 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
