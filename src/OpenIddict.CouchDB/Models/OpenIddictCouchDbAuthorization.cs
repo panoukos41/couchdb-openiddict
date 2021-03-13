@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CouchDB.Driver.Types;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,8 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict authorization.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Subject = {Subject,nq} ; Type = {Type,nq} ; Status = {Status,nq}")]
-    public class OpenIddictCouchDbAuthorization : OpenIddictCouchDocument
+    public class OpenIddictCouchDbAuthorization : CouchDocument
     {
-        public override string Discriminator { get; set; } = "openiddict.authorization";
-
         /// <summary>
         /// Gets or sets the identifier of the application associated with the current authorization.
         /// </summary>

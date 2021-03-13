@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CouchDB.Driver.Types;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
@@ -9,10 +10,8 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict token.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Subject = {Subject,nq} ; Type = {Type,nq} ; Status = {Status,nq}")]
-    public class OpenIddictCouchDbToken : OpenIddictCouchDocument
+    public class OpenIddictCouchDbToken : CouchDocument
     {
-        public override string Discriminator { get; set; } = "openiddict.token";
-
         /// <summary>
         /// Gets or sets the identifier of the application associated with the current token.
         /// </summary>

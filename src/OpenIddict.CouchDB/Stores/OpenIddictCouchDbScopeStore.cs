@@ -7,11 +7,14 @@
 using CouchDB.Driver;
 using CouchDB.Driver.Exceptions;
 using CouchDB.Driver.Extensions;
+using CouchDB.Driver.Views;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenIddict.Abstractions;
+using OpenIddict.CouchDB.Internal;
 using OpenIddict.CouchDB.Models;
+using OpenIddict.CouchDB.Stores.Internal;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -26,13 +29,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using SR = OpenIddict.Abstractions.OpenIddictResources;
 
-namespace OpenIddict.CouchDB
+namespace OpenIddict.CouchDB.Stores
 {
     /// <summary>
     /// Provides methods allowing to manage the scopes stored in a database.
     /// </summary>
     /// <typeparam name="TScope">The type of the Scope entity.</typeparam>
-    public class OpenIddictCouchDbScopeStore<TScope> : BaseOpenIddictCouchDbStore<TScope>, IOpenIddictScopeStore<TScope>
+    public class OpenIddictCouchDbScopeStore<TScope> : StoreBase<TScope>, IOpenIddictScopeStore<TScope>
         where TScope : OpenIddictCouchDbScope
     {
         public OpenIddictCouchDbScopeStore(
@@ -40,54 +43,47 @@ namespace OpenIddict.CouchDB
             IOptionsMonitor<OpenIddictCouchDbOptions> options)
             : base(provider, options)
         {
+            Discriminator = Options.CurrentValue.ScopeDiscriminator;
         }
 
-        protected override string Discriminator => Options.CurrentValue.ScopeDiscriminator;
+        /// <inheritdoc/>
+        protected override string Discriminator { get; }
 
         /// <inheritdoc/>
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
-            var db = GetDatabase();
-            var (design, view) = OpenIddictCouchDbViews.Scope.Count;
-            return (await db.GetViewAsync<TScope, int>(design, view, cancellationToken: cancellationToken))
-                .Rows.FirstOrDefault()?.Value ?? 0;
+            var value = (await GetDatabase()
+                .GetViewAsync(Views.Scope<TScope>.Count, cancellationToken: cancellationToken))
+                .FirstOrDefault()?.Value;
+
+            if (long.TryParse(value, out var count))
+            {
+                return count;
+            }
+            return 0;
         }
 
         /// <inheritdoc/>
         public virtual async ValueTask<long> CountAsync<TResult>(
             Func<IQueryable<TScope>, IQueryable<TResult>> query, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
-            var db = GetDatabase();
-
-            return query(QueryDb(db)).LongCount();
+            return await Task.Run(() => query(QueryDb()).LongCount()).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public virtual async ValueTask CreateAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
-            scope.Discriminator = Discriminator;
+            Check.NotNull(scope, nameof(scope));
 
-            var db = GetDatabase();
-
-            await db.AddAsync(scope, cancellationToken: cancellationToken);
+            await GetDatabase().AddAsync(scope, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
         public virtual async ValueTask DeleteAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             var db = GetDatabase();
 
@@ -122,9 +118,7 @@ namespace OpenIddict.CouchDB
                 throw new ArgumentException(SR.GetResourceString(SR.ID0202), nameof(name));
             }
 
-            var db = GetDatabase();
-
-            return (await QueryDb(db)
+            return (await QueryDb()
                 .Where(x => x.Name == name)
                 .Take(1)
                 .ToCouchListAsync(cancellationToken))
@@ -143,17 +137,17 @@ namespace OpenIddict.CouchDB
 
             async IAsyncEnumerable<TScope> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var db = GetDatabase();
-                var (desing, view) = OpenIddictCouchDbViews.Scope.Name;
-
-                var result = await db.GetViewAsync<TScope, int, TScope>(desing, view, cancellationToken: cancellationToken, options: new()
+                var options = new CouchViewOptions<string>
                 {
-                    Keys = names.ToHashSet()
-                });
+                    IncludeDocs = true,
+                    Keys = names
+                };
 
-                foreach (var row in result.Rows)
+                foreach (var row in await GetDatabase()
+                    .GetViewAsync(Views.Scope<TScope>.Name, options, cancellationToken)
+                    .ConfigureAwait(false))
                 {
-                    yield return row.Doc;
+                    yield return row.Document;
                 }
             }
         }
@@ -170,9 +164,7 @@ namespace OpenIddict.CouchDB
 
             async IAsyncEnumerable<TScope> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var db = GetDatabase();
-
-                foreach (var scope in await QueryDb(db).Where(scope =>
+                foreach (var scope in await QueryDb().Where(scope =>
                     scope.Resources.Contains(resource)).ToCouchListAsync(cancellationToken))
                 {
                     yield return scope;
@@ -185,22 +177,15 @@ namespace OpenIddict.CouchDB
             Func<IQueryable<TScope>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
-            var db = GetDatabase();
-            return await query(QueryDb(db), state).FirstOrDefaultAsync(cancellationToken);
+            return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
         }
 
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetDescriptionAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             return new ValueTask<string?>(scope.Description);
         }
@@ -208,10 +193,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableDictionary<CultureInfo, string>> GetDescriptionsAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (scope.Descriptions is null || scope.Descriptions.Count == 0)
             {
@@ -224,10 +206,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetDisplayNameAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             return new ValueTask<string?>(scope.DisplayName);
         }
@@ -235,10 +214,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableDictionary<CultureInfo, string>> GetDisplayNamesAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (scope.DisplayNames is null || scope.DisplayNames.Count == 0)
             {
@@ -251,10 +227,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetIdAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             return new ValueTask<string?>(scope.Id.ToString());
         }
@@ -262,10 +235,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetNameAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             return new ValueTask<string?>(scope.Name);
         }
@@ -273,10 +243,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (scope.Properties is null)
             {
@@ -297,10 +264,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<ImmutableArray<string>> GetResourcesAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (scope.Resources is null || scope.Resources.Count == 0)
             {
@@ -328,17 +292,19 @@ namespace OpenIddict.CouchDB
         public virtual async IAsyncEnumerable<TScope> ListAsync(
             int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            var db = GetDatabase();
-            var (design, view) = OpenIddictCouchDbViews.Scope.All;
-            var result = await db.GetViewAsync<TScope, int, TScope>(design, view, cancellationToken: cancellationToken, options: new()
+            var options = new CouchViewOptions<string>
             {
+                Reduce = false,
+                IncludeDocs = true,
                 Limit = count,
-                Skip = offset
-            });
+                Skip = offset ?? 0
+            };
 
-            foreach (var row in result.Rows)
+            foreach (var row in await GetDatabase()
+                .GetViewAsync(Views.Scope<TScope>.Count, options, cancellationToken)
+                .ConfigureAwait(false))
             {
-                yield return row.Doc;
+                yield return row.Document;
             }
         }
 
@@ -347,18 +313,13 @@ namespace OpenIddict.CouchDB
             Func<IQueryable<TScope>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return ExecuteAsync(cancellationToken);
 
             async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var db = GetDatabase();
-
-                foreach (var element in query(QueryDb(db), state))
+                foreach (var element in await Task.Run(() => query(QueryDb(), state), cancellationToken))
                 {
                     yield return element;
                 }
@@ -368,10 +329,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask SetDescriptionAsync(TScope scope, string? description, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             scope.Description = description;
 
@@ -382,10 +340,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetDescriptionsAsync(TScope scope,
             ImmutableDictionary<CultureInfo, string> descriptions, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             scope.Descriptions = descriptions;
 
@@ -396,10 +351,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetDisplayNamesAsync(TScope scope,
             ImmutableDictionary<CultureInfo, string> names, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             scope.DisplayNames = names;
 
@@ -409,10 +361,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask SetDisplayNameAsync(TScope scope, string? name, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             scope.DisplayName = name;
 
@@ -422,10 +371,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask SetNameAsync(TScope scope, string? name, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             scope.Name = name;
 
@@ -436,10 +382,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetPropertiesAsync(TScope scope,
             ImmutableDictionary<string, JsonElement> properties, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (properties is null || properties.IsEmpty)
             {
@@ -474,10 +417,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask SetResourcesAsync(TScope scope, ImmutableArray<string> resources, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             if (resources.IsDefaultOrEmpty)
             {
@@ -494,10 +434,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual async ValueTask UpdateAsync(TScope scope, CancellationToken cancellationToken)
         {
-            if (scope is null)
-            {
-                throw new ArgumentNullException(nameof(scope));
-            }
+            Check.NotNull(scope, nameof(scope));
 
             var db = GetDatabase();
             try

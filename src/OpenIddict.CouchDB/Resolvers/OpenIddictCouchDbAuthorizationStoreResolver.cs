@@ -7,18 +7,19 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.Abstractions;
 using OpenIddict.CouchDB.Models;
+using OpenIddict.CouchDB.Stores;
 using System;
 using System.Collections.Concurrent;
 using SR = OpenIddict.Abstractions.OpenIddictResources;
 
-namespace OpenIddict.CouchDB
+namespace OpenIddict.CouchDB.Resolvers
 {
     /// <summary>
     /// Exposes a method allowing to resolve an authorization store.
     /// </summary>
     public class OpenIddictCouchDbAuthorizationStoreResolver : IOpenIddictAuthorizationStoreResolver
     {
-        private readonly ConcurrentDictionary<Type, Type> _cache = new ConcurrentDictionary<Type, Type>();
+        private readonly ConcurrentDictionary<Type, Type> _cache = new();
         private readonly IServiceProvider _provider;
 
         public OpenIddictCouchDbAuthorizationStoreResolver(IServiceProvider provider)

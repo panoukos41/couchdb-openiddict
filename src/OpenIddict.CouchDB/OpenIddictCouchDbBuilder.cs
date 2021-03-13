@@ -40,10 +40,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
         public OpenIddictCouchDbBuilder Configure(Action<OpenIddictCouchDbOptions> configuration)
         {
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
+            Check.NotNull(configuration, nameof(configuration));
 
             Services.Configure(configuration);
 

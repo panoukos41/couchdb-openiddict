@@ -8,11 +8,14 @@ using CouchDB.Driver;
 using CouchDB.Driver.Exceptions;
 using CouchDB.Driver.Extensions;
 using CouchDB.Driver.Query.Extensions;
+using CouchDB.Driver.Views;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenIddict.Abstractions;
+using OpenIddict.CouchDB.Internal;
 using OpenIddict.CouchDB.Models;
+using OpenIddict.CouchDB.Stores.Internal;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -27,13 +30,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using SR = OpenIddict.Abstractions.OpenIddictResources;
 
-namespace OpenIddict.CouchDB
+namespace OpenIddict.CouchDB.Stores
 {
     /// <summary>
     /// Provides methods allowing to manage the applications stored in a database.
     /// </summary>
     /// <typeparam name="TApplication">The type of the Application entity.</typeparam>
-    public class OpenIddictCouchDbApplicationStore<TApplication> : BaseOpenIddictCouchDbStore<TApplication>, IOpenIddictApplicationStore<TApplication>
+    public class OpenIddictCouchDbApplicationStore<TApplication> : StoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
         where TApplication : OpenIddictCouchDbApplication
     {
         public OpenIddictCouchDbApplicationStore(
@@ -41,28 +44,31 @@ namespace OpenIddict.CouchDB
             IOptionsMonitor<OpenIddictCouchDbOptions> options)
             : base(provider, options)
         {
+            Discriminator = Options.CurrentValue.ApplicationDiscriminator;
         }
 
-        protected override string Discriminator => Options.CurrentValue.ApplicationDiscriminator;
+        /// <inheritdoc/>
+        protected override string Discriminator { get; }
 
         /// <inheritdoc/>
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
-            var db = GetDatabase();
-            var (design, view) = OpenIddictCouchDbViews.Application.Count;
+            var value = (await GetDatabase()
+                .GetViewAsync(Views.Application<TApplication>.Count, cancellationToken: cancellationToken))
+                .FirstOrDefault()?.Value;
 
-            return (await db.GetViewAsync<TApplication, int>(design, view, cancellationToken: cancellationToken))
-                .Rows.FirstOrDefault()?.Value ?? 0;
+            if (long.TryParse(value, out var count))
+            {
+                return count;
+            }
+            return 0;
         }
 
         /// <inheritdoc/>
         public virtual ValueTask<long> CountAsync<TResult>(
             Func<IQueryable<TApplication>, IQueryable<TResult>> query, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return new(query(QueryDb()).LongCount());
         }
@@ -71,54 +77,44 @@ namespace OpenIddict.CouchDB
         public virtual async ValueTask CreateAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
-            application.Discriminator = Discriminator;
-
-            var db = GetDatabase();
-
-            await db.AddAsync(application, cancellationToken: cancellationToken);
+            await GetDatabase().AddAsync(application, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
         public virtual async ValueTask DeleteAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
-
-            var db = GetDatabase();
+            Check.NotNull(application, nameof(application));
 
             try
             {
-                await db.RemoveAsync(application, cancellationToken: cancellationToken);
+                await GetDatabase().RemoveAsync(application, cancellationToken: cancellationToken);
             }
             catch (CouchConflictException ex)
             {
                 throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0239), ex);
             }
 
-            var deleteDb = GetDatabase<CouchDocumentDelete>();
+            var delDb = GetDatabase<CouchDocumentDelete>(Discriminator); // Db to mass delete documents.
+            var docsToDelete = new List<CouchDocumentDelete>();
 
-            //var auths = OpenIddictCouchViews.Application.Authorizations;
-            var (design, view) = OpenIddictCouchDbViews.Authorization.ApplicationId;
+            // Get the authorizations associated with the application.
+            var auths = GetDatabase<OpenIddictCouchDbAuthorization>()
+                .GetViewAsync(Views.Authorization<OpenIddictCouchDbAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
-            // Delete the authorizations associated with the application.
-            var auths = await db.GetViewAsync<TApplication, string, CouchDocumentEmpty>(design, view);
-            var authsDel = deleteDb.AddOrUpdateRangeAsync(
-                auths.Rows.Select(x => new CouchDocumentDelete(x.Id, x.Doc.Rev)).ToArray());
+            // Get the tokens associated with the application.
+            var tokens = GetDatabase<OpenIddictCouchDbToken>()
+                .GetViewAsync(Views.Token<OpenIddictCouchDbToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
-            // Delete the tokens associated with the application.
-            (design, view) = OpenIddictCouchDbViews.Token.ApplicationId;
-            var tokens = await db.GetViewAsync<TApplication, string, CouchDocumentDelete>(design, view);
-            var tokensDel = deleteDb.AddOrUpdateRangeAsync(tokens.Rows.Select(x => new CouchDocumentDelete(x.Id, x.Doc.Rev)).ToArray());
+            await Task.WhenAll(auths, tokens).ConfigureAwait(false);
 
-            await Task.WhenAll(authsDel, tokensDel);
+            // Delete all the authorizations and tokens associated with the application.
+            docsToDelete.AddRange(auths.Result.Select(x => new CouchDocumentDelete(x.Id, x.Value)));
+            docsToDelete.AddRange(tokens.Result.Select(x => new CouchDocumentDelete(x.Id, x.Value)));
+
+            await delDb.AddOrUpdateRangeAsync(docsToDelete).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -130,9 +126,7 @@ namespace OpenIddict.CouchDB
                 throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
             }
 
-            var db = GetDatabase();
-
-            return (await QueryDb(db)
+            return (await QueryDb()
                 .Where(x => x.ClientId == identifier)
                 .Take(1)
                 .ToCouchListAsync(cancellationToken))
@@ -165,9 +159,7 @@ namespace OpenIddict.CouchDB
 
             async IAsyncEnumerable<TApplication> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var db = GetDatabase();
-
-                foreach (var application in await QueryDb(db).Where(app =>
+                foreach (var application in await QueryDb().Where(app =>
                     app.PostLogoutRedirectUris.Contains(address)).ToCouchListAsync(cancellationToken))
                 {
                     yield return application;
@@ -188,9 +180,7 @@ namespace OpenIddict.CouchDB
 
             async IAsyncEnumerable<TApplication> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var db = GetDatabase();
-
-                foreach (var application in await QueryDb(db).Where(app =>
+                foreach (var application in await QueryDb().Where(app =>
                     app.RedirectUris.Contains(address)).ToCouchListAsync(cancellationToken))
                 {
                     yield return application;
@@ -203,24 +193,16 @@ namespace OpenIddict.CouchDB
             Func<IQueryable<TApplication>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
-            var db = GetDatabase();
-
-            return await query(QueryDb(db), state).FirstOrDefaultAsync(cancellationToken);
+            return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
         }
 
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetClientIdAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.ClientId);
         }
@@ -229,10 +211,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<string?> GetClientSecretAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.ClientSecret);
         }
@@ -241,10 +220,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<string?> GetClientTypeAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.Type);
         }
@@ -253,10 +229,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<string?> GetConsentTypeAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.ConsentType);
         }
@@ -265,10 +238,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<string?> GetDisplayNameAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.DisplayName);
         }
@@ -277,10 +247,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableDictionary<CultureInfo, string>> GetDisplayNamesAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.DisplayNames is null || application.DisplayNames.Count == 0)
             {
@@ -293,10 +260,7 @@ namespace OpenIddict.CouchDB
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetIdAsync(TApplication application, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             return new ValueTask<string?>(application.Id.ToString());
         }
@@ -305,10 +269,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableArray<string>> GetPermissionsAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.Permissions is null || application.Permissions.Count == 0)
             {
@@ -322,10 +283,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableArray<string>> GetPostLogoutRedirectUrisAsync(
             TApplication application, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.PostLogoutRedirectUris is null || application.PostLogoutRedirectUris.Count == 0)
             {
@@ -339,10 +297,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.Properties is null)
             {
@@ -364,10 +319,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableArray<string>> GetRedirectUrisAsync(
             TApplication application, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.RedirectUris is null || application.RedirectUris.Count == 0)
             {
@@ -381,10 +333,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask<ImmutableArray<string>> GetRequirementsAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (application.Requirements is null || application.Requirements.Count == 0)
             {
@@ -412,18 +361,18 @@ namespace OpenIddict.CouchDB
         public virtual async IAsyncEnumerable<TApplication> ListAsync(
             int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            var db = GetDatabase();
-            var (design, view) = OpenIddictCouchDbViews.Application.All;
-
-            var result = await db.GetViewAsync<TApplication, int, TApplication>(design, view, new()
+            var options = new CouchViewOptions<string>
             {
+                Reduce = false,
+                IncludeDocs = true,
                 Limit = count,
-                Skip = offset
-            });
+                Skip = offset ?? 0
+            };
 
-            foreach (var row in result.Rows)
+            foreach (var row in await GetDatabase()
+                .GetViewAsync(Views.Application<TApplication>.Count, options, cancellationToken).ConfigureAwait(false))
             {
-                yield return row.Doc;
+                yield return row.Document;
             }
         }
 
@@ -432,18 +381,13 @@ namespace OpenIddict.CouchDB
             Func<IQueryable<TApplication>, TState, IQueryable<TResult>> query,
             TState state, CancellationToken cancellationToken)
         {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
+            Check.NotNull(query, nameof(query));
 
             return ExecuteAsync(cancellationToken);
 
             async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                // todo: check
-                //foreach (var element in await query(QueryDb(db), state).ToCouchListAsync(cancellationToken))
-                foreach (var element in await Task.Run(() => query(QueryDb(), state)))
+                foreach (var element in await Task.Run(() => query(QueryDb(), state), cancellationToken))
                 {
                     yield return element;
                 }
@@ -454,10 +398,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetClientIdAsync(TApplication application,
             string? identifier, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.ClientId = identifier;
 
@@ -468,10 +409,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetClientSecretAsync(TApplication application,
             string? secret, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.ClientSecret = secret;
 
@@ -482,10 +420,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetClientTypeAsync(TApplication application,
             string? type, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.Type = type;
 
@@ -496,10 +431,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetConsentTypeAsync(TApplication application,
             string? type, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.ConsentType = type;
 
@@ -510,10 +442,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetDisplayNameAsync(TApplication application,
             string? name, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.DisplayName = name;
 
@@ -524,10 +453,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetDisplayNamesAsync(TApplication application,
             ImmutableDictionary<CultureInfo, string> names, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             application.DisplayNames = names;
 
@@ -538,10 +464,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetPermissionsAsync(TApplication application,
             ImmutableArray<string> permissions, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (permissions.IsDefaultOrEmpty)
             {
@@ -559,10 +482,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetPostLogoutRedirectUrisAsync(TApplication application,
             ImmutableArray<string> addresses, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (addresses.IsDefaultOrEmpty)
             {
@@ -580,10 +500,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetPropertiesAsync(TApplication application,
             ImmutableDictionary<string, JsonElement> properties, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (properties is null || properties.IsEmpty)
             {
@@ -619,10 +536,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetRedirectUrisAsync(TApplication application,
             ImmutableArray<string> addresses, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (addresses.IsDefaultOrEmpty)
             {
@@ -640,10 +554,7 @@ namespace OpenIddict.CouchDB
         public virtual ValueTask SetRequirementsAsync(TApplication application,
             ImmutableArray<string> requirements, CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             if (requirements.IsDefaultOrEmpty)
             {
@@ -661,10 +572,7 @@ namespace OpenIddict.CouchDB
         public virtual async ValueTask UpdateAsync(TApplication application,
             CancellationToken cancellationToken)
         {
-            if (application is null)
-            {
-                throw new ArgumentNullException(nameof(application));
-            }
+            Check.NotNull(application, nameof(application));
 
             var db = GetDatabase();
             try
