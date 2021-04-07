@@ -12,7 +12,7 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict application.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; ClientId = {ClientId,nq} ; Type = {Type,nq}")]
-    public class OpenIddictCouchDbApplication : CouchDocument
+    public class CouchDbApplication : CouchDocument
     {
         /// <summary>
         /// Gets or sets the client identifier associated with the current application.
