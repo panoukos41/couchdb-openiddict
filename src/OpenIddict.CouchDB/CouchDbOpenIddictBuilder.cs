@@ -17,13 +17,13 @@ namespace Microsoft.Extensions.DependencyInjection
     /// <summary>
     /// Exposes the necessary methods required to configure the OpenIddict CouchDB services.
     /// </summary>
-    public class OpenIddictCouchDbBuilder
+    public class CouchDbOpenIddictBuilder
     {
         /// <summary>
-        /// Initializes a new instance of <see cref="OpenIddictCouchDbBuilder"/>.
+        /// Initializes a new instance of <see cref="CouchDbOpenIddictBuilder"/>.
         /// </summary>
         /// <param name="services">The services collection.</param>
-        public OpenIddictCouchDbBuilder(IServiceCollection services)
+        public CouchDbOpenIddictBuilder(IServiceCollection services)
             => Services = services ?? throw new ArgumentNullException(nameof(services));
 
         /// <summary>
@@ -37,8 +37,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="configuration">The delegate used to configure the OpenIddict options.</param>
         /// <remarks>This extension can be safely called multiple times.</remarks>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder Configure(Action<OpenIddictCouchDbOptions> configuration)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder Configure(Action<CouchDbOpenIddictOptions> configuration)
         {
             Check.NotNull(configuration, nameof(configuration));
 
@@ -50,9 +50,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Configures OpenIddict to use the specified entity as the default application entity.
         /// </summary>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder ReplaceDefaultApplicationEntity<TApplication>()
-            where TApplication : OpenIddictCouchDbApplication
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder ReplaceDefaultApplicationEntity<TApplication>()
+            where TApplication : CouchDbApplication
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultApplicationType = typeof(TApplication));
 
@@ -62,9 +62,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Configures OpenIddict to use the specified entity as the default authorization entity.
         /// </summary>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder ReplaceDefaultAuthorizationEntity<TAuthorization>()
-            where TAuthorization : OpenIddictCouchDbAuthorization
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder ReplaceDefaultAuthorizationEntity<TAuthorization>()
+            where TAuthorization : CouchDbAuthorization
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultAuthorizationType = typeof(TAuthorization));
 
@@ -74,9 +74,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Configures OpenIddict to use the specified entity as the default scope entity.
         /// </summary>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder ReplaceDefaultScopeEntity<TScope>()
-            where TScope : OpenIddictCouchDbScope
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder ReplaceDefaultScopeEntity<TScope>()
+            where TScope : CouchDbScope
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultScopeType = typeof(TScope));
 
@@ -86,9 +86,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Configures OpenIddict to use the specified entity as the default token entity.
         /// </summary>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder ReplaceDefaultTokenEntity<TToken>()
-            where TToken : OpenIddictCouchDbToken
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder ReplaceDefaultTokenEntity<TToken>()
+            where TToken : CouchDbToken
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultTokenType = typeof(TToken));
 
@@ -99,8 +99,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Replaces the default application discriminator (by default, openiddict.applications).
         /// </summary>
         /// <param name="discriminator">The discriminator name.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder SetApplicationDiscriminator(string discriminator)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder SetApplicationDiscriminator(string discriminator)
         {
             if (string.IsNullOrEmpty(discriminator))
             {
@@ -114,8 +114,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Replaces the default authorization discriminator (by default, openiddict.authorizations).
         /// </summary>
         /// <param name="discriminator">The discriminator name.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder SetAuthorizationDiscriminator(string discriminator)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder SetAuthorizationDiscriminator(string discriminator)
         {
             if (string.IsNullOrEmpty(discriminator))
             {
@@ -129,8 +129,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Replaces the default scope discriminator (by default, openiddict.scopes).
         /// </summary>
         /// <param name="discriminator">The discriminator name.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder SetScopeDiscriminator(string discriminator)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder SetScopeDiscriminator(string discriminator)
         {
             if (string.IsNullOrEmpty(discriminator))
             {
@@ -144,8 +144,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Replaces the default token discriminator (by default, openiddict.tokens).
         /// </summary>
         /// <param name="discriminator">The discriminator name.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder SetTokenDiscriminator(string discriminator)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder SetTokenDiscriminator(string discriminator)
         {
             if (string.IsNullOrEmpty(discriminator))
             {
@@ -160,8 +160,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// to retrieve a database.
         /// </summary>
         /// <param name="name">The name of the database.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder SetDatabaseName(string name)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder SetDatabaseName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -172,12 +172,24 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         /// <summary>
+        /// Configures the CouchDB design document that will be used.
+        /// </summary>
+        /// <param name="viewOptions">The new options to use.</param>
+        /// <returns>The <see cref="CouchDbIdentityBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder UseViewOptions(CouchDbOpenIddictViewOptions viewOptions)
+        {
+            Check.NotNull(viewOptions, nameof(viewOptions));
+
+            return Configure(options => options.ViewOptions = viewOptions);
+        }
+
+        /// <summary>
         /// Configures the CouchDB stores to use the specified client
         /// instead of retrieving it from the dependency injection container.
         /// </summary>
         /// <param name="client">The <see cref="ICouchClient"/>.</param>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public OpenIddictCouchDbBuilder UseClient(ICouchClient client)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public CouchDbOpenIddictBuilder UseClient(ICouchClient client)
         {
             if (client is null)
             {

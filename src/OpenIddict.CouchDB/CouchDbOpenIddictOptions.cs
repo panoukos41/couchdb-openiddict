@@ -5,14 +5,17 @@
  */
 
 using CouchDB.Driver;
+using OpenIddict.CouchDB.Internal;
 
 namespace OpenIddict.CouchDB
 {
     /// <summary>
     /// Provides various settings needed to configure the OpenIddict MongoDB integration.
     /// </summary>
-    public class OpenIddictCouchDbOptions
+    public class CouchDbOpenIddictOptions
     {
+        private CouchDbOpenIddictViewOptions _viewOptions = new();
+
         /// <summary>
         /// Gets or sets the name of the applications collection (by default, openiddict.applications).
         /// </summary>
@@ -50,5 +53,18 @@ namespace OpenIddict.CouchDB
         /// by default. You can change it however you want.
         /// </summary>
         public int QueryLimit { get; set; } = 500_000;
+
+        /// <summary>
+        /// The views used to query the couchdb database.
+        /// </summary>
+        public CouchDbOpenIddictViewOptions ViewOptions
+        {
+            get => _viewOptions;
+            set
+            {
+                _viewOptions = value;
+                Views.ApplyOptions(_viewOptions);
+            }
+        }
     }
 }
