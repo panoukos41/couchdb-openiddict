@@ -35,13 +35,13 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the scopes stored in a database.
     /// </summary>
     /// <typeparam name="TScope">The type of the Scope entity.</typeparam>
-    public class OpenIddictCouchDbScopeStore<TScope> : StoreBase<TScope>, IOpenIddictScopeStore<TScope>
-        where TScope : OpenIddictCouchDbScope
+    public class CouchDbScopeStore<TScope> : StoreBase<TScope>, IOpenIddictScopeStore<TScope>
+        where TScope : CouchDbScope
     {
-        public OpenIddictCouchDbScopeStore(
-            IServiceProvider provider,
-            IOptionsMonitor<OpenIddictCouchDbOptions> options)
-            : base(provider, options)
+        public CouchDbScopeStore(
+            IOptionsMonitor<CouchDbOpenIddictOptions> options,
+            IServiceProvider provider)
+            : base(options, provider)
         {
             Discriminator = Options.CurrentValue.ScopeDiscriminator;
         }
@@ -53,7 +53,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
             var value = (await GetDatabase()
-                .GetViewAsync(Views.Scope<TScope>.Count, cancellationToken: cancellationToken))
+                .GetViewAsync(Views.Scope<TScope>.Scopes, cancellationToken: cancellationToken))
                 .FirstOrDefault()?.Value;
 
             if (long.TryParse(value, out var count))
@@ -301,7 +301,7 @@ namespace OpenIddict.CouchDB.Stores
             };
 
             foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Scope<TScope>.Count, options, cancellationToken)
+                .GetViewAsync(Views.Scope<TScope>.Scopes, options, cancellationToken)
                 .ConfigureAwait(false))
             {
                 yield return row.Document;

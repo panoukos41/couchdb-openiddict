@@ -36,13 +36,13 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the applications stored in a database.
     /// </summary>
     /// <typeparam name="TApplication">The type of the Application entity.</typeparam>
-    public class OpenIddictCouchDbApplicationStore<TApplication> : StoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
-        where TApplication : OpenIddictCouchDbApplication
+    public class CouchDbApplicationStore<TApplication> : StoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
+        where TApplication : CouchDbApplication
     {
-        public OpenIddictCouchDbApplicationStore(
-            IServiceProvider provider,
-            IOptionsMonitor<OpenIddictCouchDbOptions> options)
-            : base(provider, options)
+        public CouchDbApplicationStore(
+            IOptionsMonitor<CouchDbOpenIddictOptions> options,
+            IServiceProvider provider)
+            : base(options, provider)
         {
             Discriminator = Options.CurrentValue.ApplicationDiscriminator;
         }
@@ -54,7 +54,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
             var value = (await GetDatabase()
-                .GetViewAsync(Views.Application<TApplication>.Count, cancellationToken: cancellationToken))
+                .GetViewAsync(Views.Application<TApplication>.Applications, cancellationToken: cancellationToken))
                 .FirstOrDefault()?.Value;
 
             if (long.TryParse(value, out var count))
@@ -97,22 +97,22 @@ namespace OpenIddict.CouchDB.Stores
                 throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0239), ex);
             }
 
-            var delDb = GetDatabase<CouchDocumentDelete>(Discriminator); // Db to mass delete documents.
-            var docsToDelete = new List<CouchDocumentDelete>();
+            var delDb = GetDatabase<DeleteDocument>(Discriminator); // Db to mass delete documents.
+            var docsToDelete = new List<DeleteDocument>();
 
             // Get the authorizations associated with the application.
-            var auths = GetDatabase<OpenIddictCouchDbAuthorization>()
-                .GetViewAsync(Views.Authorization<OpenIddictCouchDbAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+            var auths = GetDatabase<CouchDbAuthorization>()
+                .GetViewAsync(Views.Authorization<CouchDbAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             // Get the tokens associated with the application.
-            var tokens = GetDatabase<OpenIddictCouchDbToken>()
-                .GetViewAsync(Views.Token<OpenIddictCouchDbToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+            var tokens = GetDatabase<CouchDbToken>()
+                .GetViewAsync(Views.Token<CouchDbToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             await Task.WhenAll(auths, tokens).ConfigureAwait(false);
 
             // Delete all the authorizations and tokens associated with the application.
-            docsToDelete.AddRange(auths.Result.Select(x => new CouchDocumentDelete(x.Id, x.Value)));
-            docsToDelete.AddRange(tokens.Result.Select(x => new CouchDocumentDelete(x.Id, x.Value)));
+            docsToDelete.AddRange(auths.Result.Select(x => new DeleteDocument(x.Id, x.Value)));
+            docsToDelete.AddRange(tokens.Result.Select(x => new DeleteDocument(x.Id, x.Value)));
 
             await delDb.AddOrUpdateRangeAsync(docsToDelete).ConfigureAwait(false);
         }
@@ -370,7 +370,7 @@ namespace OpenIddict.CouchDB.Stores
             };
 
             foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Application<TApplication>.Count, options, cancellationToken).ConfigureAwait(false))
+                .GetViewAsync(Views.Application<TApplication>.Applications, options, cancellationToken).ConfigureAwait(false))
             {
                 yield return row.Document;
             }

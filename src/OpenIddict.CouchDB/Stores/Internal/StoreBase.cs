@@ -14,7 +14,7 @@ namespace OpenIddict.CouchDB.Stores.Internal
         /// <summary>
         /// Gets the options associated with the current store.
         /// </summary>
-        protected IOptionsMonitor<OpenIddictCouchDbOptions> Options { get; }
+        protected IOptionsMonitor<CouchDbOpenIddictOptions> Options { get; }
 
         /// <summary>
         /// Get the discriminator value used create and to query
@@ -22,7 +22,7 @@ namespace OpenIddict.CouchDB.Stores.Internal
         /// </summary>
         protected abstract string Discriminator { get; }
 
-        protected StoreBase(IServiceProvider provider, IOptionsMonitor<OpenIddictCouchDbOptions> options)
+        protected StoreBase(IOptionsMonitor<CouchDbOpenIddictOptions> options, IServiceProvider provider)
         {
             Options = options;
             Client = options.CurrentValue.CouchClient

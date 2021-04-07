@@ -20,7 +20,7 @@ Thanks for looking at this library 😄
 
 By default a database named `openiddict` is used but you can change it using the options overload.
 
-Your [CouchDB](https://couchdb.apache.org/) database must include the following [design documents](ddocs/).
+Your [CouchDB](https://couchdb.apache.org/) database must implement the [ddoc.json](ddocs/ddoc.json) in the [ddocs](/ddocs) folder.
 
 At your `Startup.cs` add your `ICouchClient` in DI and use the following code.
 ```csharp

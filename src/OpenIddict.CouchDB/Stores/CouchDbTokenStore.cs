@@ -34,13 +34,13 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the tokens stored in a database.
     /// </summary>
     /// <typeparam name="TToken">The type of the Token entity.</typeparam>
-    public class OpenIddictCouchDbTokenStore<TToken> : StoreBase<TToken>, IOpenIddictTokenStore<TToken>
-        where TToken : OpenIddictCouchDbToken
+    public class CouchDbTokenStore<TToken> : StoreBase<TToken>, IOpenIddictTokenStore<TToken>
+        where TToken : CouchDbToken
     {
-        public OpenIddictCouchDbTokenStore(
-            IServiceProvider provider,
-            IOptionsMonitor<OpenIddictCouchDbOptions> options)
-            : base(provider, options)
+        public CouchDbTokenStore(
+            IOptionsMonitor<CouchDbOpenIddictOptions> options,
+            IServiceProvider provider)
+            : base(options, provider)
         {
             Discriminator = Options.CurrentValue.TokenDiscriminator;
         }
@@ -52,7 +52,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
             var value = (await GetDatabase()
-                .GetViewAsync(Views.Token<TToken>.Count, cancellationToken: cancellationToken))
+                .GetViewAsync(Views.Token<TToken>.Tokens, cancellationToken: cancellationToken))
                 .FirstOrDefault()?.Value;
 
             if (long.TryParse(value, out var count))
@@ -456,7 +456,7 @@ namespace OpenIddict.CouchDB.Stores
             };
 
             foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Token<TToken>.Count, options, cancellationToken)
+                .GetViewAsync(Views.Token<TToken>.Tokens, options, cancellationToken)
                 .ConfigureAwait(false))
             {
                 yield return row.Document;
@@ -494,11 +494,11 @@ namespace OpenIddict.CouchDB.Stores
             };
             var tokens = await GetDatabase().GetViewAsync(Views.Token<TToken>.Prune, options, cancellationToken);
 
-            var delDb = GetDatabase<CouchDocumentDelete>();
+            var delDb = GetDatabase<DeleteDocument>();
             while (tokens.Count != 0)
             {
                 var toDelete = tokens.Take(take)
-                    .Select(x => new CouchDocumentDelete(x.Id, x.Value))
+                    .Select(x => new DeleteDocument(x.Id, x.Value))
                     .ToArray();
 
                 await delDb.AddOrUpdateRangeAsync(toDelete, cancellationToken);
