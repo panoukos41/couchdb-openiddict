@@ -1,9 +1,8 @@
 # P41.OpenIddict.CouchDB
 
-[![Github Build Status](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/build.yaml/badge.svg)](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/build.yaml)
-[![Nuget](https://img.shields.io/nuget/v/P41.OpenIddict.CouchDB)](https://www.nuget.org/packages/P41.OpenIddict.CouchDB/)
-[![Nuget Downloads](https://img.shields.io/nuget/dt/P41.OpenIddict.CouchDB)](https://www.nuget.org/packages/P41.OpenIddict.CouchDB/)
-[![GitHub](https://img.shields.io/github/license/panoukos41/couchdb-openiddict)](https://github.com/panoukos41/couchdb-openiddict/blob/main/LICENSE.md)
+[![Release](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/release.yaml/badge.svg)](https://github.com/panoukos41/couchdb-openiddict/actions/workflows/release.yaml)
+[![NuGet](https://buildstats.info/nuget/P41.OpenIddict.CouchDB?includePreReleases=true)](https://www.nuget.org/packages/P41.OpenIddict.CouchDB)
+[![License](https://img.shields.io/github/license/panoukos41/couchdb-openiddict)](https://github.com/panoukos41/couchdb-openiddict/blob/main/LICENSE.md)
 
 [CouchDB](https://couchdb.apache.org/) store provider for the [Openiddict](https://github.com/openiddict/openiddict-core) using [CouchDB.NET](https://github.com/matteobortolazzo/couchdb-net).
 
@@ -39,6 +38,28 @@ services.AddOpenIddict()
     .AddCore(options => options
         .UseCouchDb(options => options
             .UseClient(new CouchClient("http://localhost:5984"))))
+```
+
+You can also customize the `design document` and `views` used by the library. More information as to what a view returns and when can be found in the [ddocs](/ddocs) fodler.
+
+```csharp
+services.AddIdentity<CouchDbUser, CouchDbRole>()
+        .AddCouchDbStores(options => options
+            .UseViewOptions(new CouchDbOpenIddictViewOptions
+            {
+                Document = "openiddict";
+                Application = "application";
+                Authorization = "authorization";
+                AuthorizationApplicationId = "authorization.application_id";
+                AuthorizationSubject = "authorization.subject";
+                AuthorizationPrune = "authorization.prune";
+                Scope = "scope";
+                ScopeName = "scope.name";
+                Token = "token";
+                TokenApplicationId = "token.application_id";
+                TokenAuthorizationId = "token.authorization_id";
+                TokenPrune = "token.prune";
+            })));
 ```
 
 Services are *registered as Singleton* since `ICouchClient` is/should be registered as such and no other dependency is needed.
