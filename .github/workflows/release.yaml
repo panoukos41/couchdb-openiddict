@@ -1,4 +1,4 @@
-name: Build
+name: Release
 env: { DOTNET_NOLOGO: true }
 
 on:
