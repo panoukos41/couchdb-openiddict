@@ -1,0 +1,43 @@
+{
+  "_id": "_design/openiddict",
+  "views": {
+    "application": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.application') {\n    emit(doc._id, doc._rev);\n  }\n}"
+    },
+    "authorization": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.authorization') {\n    emit(doc._id, doc._rev);\n  }\n}"
+    },
+    "authorization.application_id": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.authorization') {\n    emit(doc.application_id, doc._rev);\n  }\n}"
+    },
+    "authorization.subject": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.authorization') {\n    emit(doc.subject, doc._rev);\n  }\n}"
+    },
+    "authorization.prune": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.authorization' && doc.status != 'inactive' && doc.status != 'valid') {\n    emit([doc.creation_date, doc.expiration_date], doc._rev);\n  }\n}"
+    },
+    "scope": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.scope') {\n    emit(doc._id, doc._rev);\n  }\n}"
+    },
+    "scope.name": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.scope') {\n    emit(doc.name, doc._rev);\n  }\n}"
+    },
+    "token": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc._id, doc._rev);\n  }\n}"
+    },
+    "token.application_id": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc.application_id, doc._rev);\n  }\n}"
+    },
+    "token.authorization_id": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc.authorization_id, doc._rev);\n  }\n}"
+    },
+    "token.prune": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token' && doc.status != 'inactive' && doc.status != 'valid') {\n    emit([doc.creation_date, doc.expiration_date], doc._rev);\n  }\n}"
+    }
+  },
+  "language": "javascript"
+}

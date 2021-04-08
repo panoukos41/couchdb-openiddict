@@ -2,96 +2,132 @@
 using System;
 
 #pragma warning disable CA1034 // Nested types should not be visible
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
 
 namespace OpenIddict.CouchDB.Internal
 {
     public static class Views
     {
+        public static string Document { get; set; }
+
+        static Views() => ApplyOptions(new());
+
         public static class Application<TApplication>
-            where TApplication : OpenIddictCouchDbApplication
+            where TApplication : CouchDbOpenIddictApplication
         {
             /// <summary>
-            /// With reduce: Key = null, Value = Count <br/>
-            /// Without reduce: Key = Id, Value = Rev
+            /// With reduce = true (default) then Key = null, Value = 'count'<br/>
+            /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TApplication> Count { get; set; } =
-                View<string, string, TApplication>.Create("application", "count");
+            public static View<string, string, TApplication> Applications { get; set; }
+
+            public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
+            {
+                Applications = new(Document, options.Application);
+            }
         }
 
         public static class Authorization<TAuthorization>
-            where TAuthorization : OpenIddictCouchDbAuthorization
+            where TAuthorization : CouchDbOpenIddictAuthorization
         {
             /// <summary>
-            /// With reduce: Key = null, Value = Count <br/>
-            /// Without reduce: Key = id, Value = Rev
+            /// With reduce = true (default) then Key = null, Value = 'count'<br/>
+            /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> Count { get; set; } =
-                View<string, string, TAuthorization>.Create("authorization", "count");
+            public static View<string, string, TAuthorization> Authorizations { get; set; }
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> ApplicationId { get; set; } =
-                View<string, string, TAuthorization>.Create("authorization", "application_id");
+            public static View<string, string, TAuthorization> ApplicationId { get; set; }
 
             /// <summary>
             /// Key = Subject, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> Subject { get; set; } =
-                View<string, string, TAuthorization>.Create("authorization", "subject");
+            public static View<string, string, TAuthorization> Subject { get; set; }
 
             /// <summary>
             /// Key = [ CreationDate, ExpirationDate ] , Value = Rev
             /// </summary>
-            public static View<DateTime[], string, TAuthorization> Prune { get; set; } =
-                View<DateTime[], string, TAuthorization>.Create("token", "prune");
+            public static View<DateTime[], string, TAuthorization> Prune { get; set; }
+
+            public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
+            {
+                Authorizations = new(Document, options.Authorization);
+                ApplicationId = new(Document, options.AuthorizationApplicationId);
+                Subject = new(Document, options.AuthorizationSubject);
+                Prune = new(Document, options.AuthorizationPrune);
+            }
         }
 
         public static class Scope<TScope>
-            where TScope : OpenIddictCouchDbScope
+            where TScope : CouchDbOpenIddictScope
         {
             /// <summary>
-            /// With reduce: Key = null, Value = Count <br/>
-            /// Without reduce: Key = Id, Value = Rev
+            /// With reduce = true (default) then Key = null, Value = 'count'<br/>
+            /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TScope> Count { get; set; } =
-                View<string, string, TScope>.Create("scope", "count");
+            public static View<string, string, TScope> Scopes { get; set; }
 
             /// <summary>
             /// Key = Name, Value = Rev
             /// </summary>
-            public static View<string, string, TScope> Name { get; set; } =
-                View<string, string, TScope>.Create("scope", "name");
+            public static View<string, string, TScope> Name { get; set; }
+
+            public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
+            {
+                Scopes = new(Document, options.Scope);
+                Name = new(Document, options.ScopeName);
+            }
         }
 
         public static class Token<TToken>
-            where TToken : OpenIddictCouchDbToken
+            where TToken : CouchDbOpenIddictToken
         {
             /// <summary>
-            /// With reduce: Key = null, Value = Count <br/>
-            /// Without reduce: Key = Id, Value = Rev
+            /// With reduce = true (default) then Key = null, Value = 'count'<br/>
+            /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> Count { get; set; } =
-                View<string, string, TToken>.Create("token", "count");
+            public static View<string, string, TToken> Tokens { get; set; }
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> ApplicationId { get; set; } =
-                View<string, string, TToken>.Create("token", "application_id");
+            public static View<string, string, TToken> ApplicationId { get; set; }
 
             /// <summary>
             /// Key = AuthorizationId, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> AuthorizationId { get; set; } =
-                View<string, string, TToken>.Create("token", "authorization_id");
+            public static View<string, string, TToken> AuthorizationId { get; set; }
 
             /// <summary>
             /// Key = [CreationDate, ExpirationDate] , Value = Rev
             /// </summary>
             /// <remarks>
-            public static View<DateTime[], string, TToken> Prune { get; set; } =
-                View<DateTime[], string, TToken>.Create("token", "prune");
+            public static View<DateTime[], string, TToken> Prune { get; set; }
+
+            public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
+            {
+                Tokens = new(Document, options.Token);
+                ApplicationId = new(Document, options.TokenApplicationId);
+                AuthorizationId = new(Document, options.TokenAuthorizationId);
+                Prune = new(Document, options.TokenPrune);
+            }
+        }
+
+        /// <summary>
+        /// Apply these options to the existing view properties.
+        /// </summary>
+        /// <param name="options"></param>
+        public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
+        {
+            Check.NotNull(options, nameof(options));
+            Document = options.Document;
+
+            Application<CouchDbOpenIddictApplication>.ApplyOptions(options);
+            Authorization<CouchDbOpenIddictAuthorization>.ApplyOptions(options);
+            Scope<CouchDbOpenIddictScope>.ApplyOptions(options);
+            Token<CouchDbOpenIddictToken>.ApplyOptions(options);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// <summary>
     /// Exposes extensions allowing to register the OpenIddict MongoDB services.
     /// </summary>
-    public static class OpenIddictCouchDbBuilderExtensions
+    public static class CouchDbOpenIddictBuilderExtensions
     {
         /// <summary>
         /// Registers the MongoDB stores services in the DI container and
@@ -24,8 +24,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="builder">The services builder used by OpenIddict to register new services.</param>
         /// <remarks>This extension can be safely called multiple times.</remarks>
-        /// <returns>The <see cref="OpenIddictCouchDbBuilder"/>.</returns>
-        public static OpenIddictCouchDbBuilder UseCouchDb(this OpenIddictCoreBuilder builder)
+        /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
+        public static CouchDbOpenIddictBuilder UseCouchDb(this OpenIddictCoreBuilder builder)
         {
             Check.NotNull(builder, nameof(builder));
 
@@ -33,24 +33,24 @@ namespace Microsoft.Extensions.DependencyInjection
             // query filtering applied by the default OpenIddict managers can be safely disabled.
             builder.DisableAdditionalFiltering();
 
-            builder.SetDefaultApplicationEntity<OpenIddictCouchDbApplication>()
-                   .SetDefaultAuthorizationEntity<OpenIddictCouchDbAuthorization>()
-                   .SetDefaultScopeEntity<OpenIddictCouchDbScope>()
-                   .SetDefaultTokenEntity<OpenIddictCouchDbToken>();
+            builder.SetDefaultApplicationEntity<CouchDbOpenIddictApplication>()
+                   .SetDefaultAuthorizationEntity<CouchDbOpenIddictAuthorization>()
+                   .SetDefaultScopeEntity<CouchDbOpenIddictScope>()
+                   .SetDefaultTokenEntity<CouchDbOpenIddictToken>();
 
             // Note: the Mongo stores/resolvers don't depend on scoped/transient services and thus
             // can be safely registered as singleton services and shared/reused across requests.
-            builder.ReplaceApplicationStoreResolver<OpenIddictCouchDbApplicationStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceAuthorizationStoreResolver<OpenIddictCouchDbAuthorizationStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceScopeStoreResolver<OpenIddictCouchDbScopeStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceTokenStoreResolver<OpenIddictCouchDbTokenStoreResolver>(ServiceLifetime.Singleton);
+            builder.ReplaceApplicationStoreResolver<CouchDOpenIddictbApplicationStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceAuthorizationStoreResolver<CouchDOpenIddictbAuthorizationStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceScopeStoreResolver<CouchDbOpenIddictScopeStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceTokenStoreResolver<CouchDbOpenIddictTokenStoreResolver>(ServiceLifetime.Singleton);
 
-            builder.Services.TryAddSingleton(typeof(OpenIddictCouchDbApplicationStore<>));
-            builder.Services.TryAddSingleton(typeof(OpenIddictCouchDbAuthorizationStore<>));
-            builder.Services.TryAddSingleton(typeof(OpenIddictCouchDbScopeStore<>));
-            builder.Services.TryAddSingleton(typeof(OpenIddictCouchDbTokenStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictApplicationStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDOpenIddictbAuthorizationStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictScopeStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictTokenStore<>));
 
-            return new OpenIddictCouchDbBuilder(builder.Services);
+            return new CouchDbOpenIddictBuilder(builder.Services);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <remarks>This extension can be safely called multiple times.</remarks>
         /// <returns>The <see cref="OpenIddictCoreBuilder"/>.</returns>
         public static OpenIddictCoreBuilder UseCouchDb(
-            this OpenIddictCoreBuilder builder, Action<OpenIddictCouchDbBuilder> configuration)
+            this OpenIddictCoreBuilder builder, Action<CouchDbOpenIddictBuilder> configuration)
         {
             Check.NotNull(builder, nameof(builder));
             Check.NotNull(configuration, nameof(configuration));

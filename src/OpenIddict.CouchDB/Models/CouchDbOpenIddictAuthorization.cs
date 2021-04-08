@@ -12,8 +12,31 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict authorization.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Subject = {Subject,nq} ; Type = {Type,nq} ; Status = {Status,nq}")]
-    public class OpenIddictCouchDbAuthorization : CouchDocument
+    public class CouchDbOpenIddictAuthorization : CouchDocument
     {
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictToken"/>.
+        /// </summary>
+        public CouchDbOpenIddictAuthorization()
+        {
+        }
+
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictAuthorization"/> from another.
+        /// </summary>
+        public CouchDbOpenIddictAuthorization(CouchDbOpenIddictAuthorization other)
+        {
+            Id = other.Id;
+            Rev = other.Rev;
+            ApplicationId = other.ApplicationId;
+            CreationDate = other.CreationDate;
+            Properties = new JObject(other.Properties);
+            Scopes = other.Scopes;
+            Status = other.Status;
+            Subject = other.Subject;
+            Type = other.Type;
+        }
+
         /// <summary>
         /// Gets or sets the identifier of the application associated with the current authorization.
         /// </summary>

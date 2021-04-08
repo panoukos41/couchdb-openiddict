@@ -34,13 +34,13 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the authorizations stored in a database.
     /// </summary>
     /// <typeparam name="TAuthorization">The type of the Authorization entity.</typeparam>
-    public class OpenIddictCouchDbAuthorizationStore<TAuthorization> : StoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
-        where TAuthorization : OpenIddictCouchDbAuthorization
+    public class CouchDOpenIddictbAuthorizationStore<TAuthorization> : OpenIddictStoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
+        where TAuthorization : CouchDbOpenIddictAuthorization
     {
-        public OpenIddictCouchDbAuthorizationStore(
-            IServiceProvider provider,
-            IOptionsMonitor<OpenIddictCouchDbOptions> options)
-            : base(provider, options)
+        public CouchDOpenIddictbAuthorizationStore(
+            IOptionsMonitor<CouchDbOpenIddictOptions> options,
+            IServiceProvider provider)
+            : base(options, provider)
         {
             Discriminator = Options.CurrentValue.AuthorizationDiscriminator;
         }
@@ -52,7 +52,7 @@ namespace OpenIddict.CouchDB.Stores
         public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
         {
             var value = (await GetDatabase()
-                .GetViewAsync(Views.Authorization<TAuthorization>.Count, cancellationToken: cancellationToken))
+                .GetViewAsync(Views.Authorization<TAuthorization>.Authorizations, cancellationToken: cancellationToken))
                 .FirstOrDefault()?.Value;
 
             if (long.TryParse(value, out long count))
@@ -94,15 +94,15 @@ namespace OpenIddict.CouchDB.Stores
             }
 
             // Get database to delete documents.
-            var delDb = GetDatabase<CouchDocumentDelete>(Discriminator);
+            var delDb = GetDatabase<DeleteDocument>(Discriminator);
 
             // Get the tokens associated with the authorization.
-            var tokens = await GetDatabase<OpenIddictCouchDbToken>()
-                .GetViewAsync(Views.Token<OpenIddictCouchDbToken>.AuthorizationId);
+            var tokens = await GetDatabase<CouchDbOpenIddictToken>()
+                .GetViewAsync(Views.Token<CouchDbOpenIddictToken>.AuthorizationId);
 
             // Delete the tokens associated with the authorization.
             await delDb.AddOrUpdateRangeAsync(
-                tokens.Select(x => new CouchDocumentDelete(x.Id, x.Value)).ToArray());
+                tokens.Select(x => new DeleteDocument(x.Id, x.Value)).ToArray());
         }
 
         /// <inheritdoc/>
@@ -447,7 +447,7 @@ namespace OpenIddict.CouchDB.Stores
             };
 
             foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Authorization<TAuthorization>.Count, options, cancellationToken)
+                .GetViewAsync(Views.Authorization<TAuthorization>.Authorizations, options, cancellationToken)
                 .ConfigureAwait(false))
             {
                 yield return row.Document;
@@ -486,11 +486,11 @@ namespace OpenIddict.CouchDB.Stores
             };
             var tokens = await GetDatabase().GetViewAsync(Views.Authorization<TAuthorization>.Prune, options, cancellationToken);
 
-            var delDb = GetDatabase<CouchDocumentDelete>();
+            var delDb = GetDatabase<DeleteDocument>();
             while (tokens.Count != 0)
             {
                 var toDelete = tokens.Take(take)
-                    .Select(x => new CouchDocumentDelete(x.Id, x.Value))
+                    .Select(x => new DeleteDocument(x.Id, x.Value))
                     .ToArray();
 
                 await delDb.AddOrUpdateRangeAsync(toDelete, cancellationToken);

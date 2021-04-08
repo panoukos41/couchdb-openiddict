@@ -3,12 +3,12 @@ using Newtonsoft.Json;
 
 namespace OpenIddict.CouchDB.Models
 {
-    public class CouchDocumentDelete : CouchDocument
+    internal class DeleteDocument : CouchDocument
     {
         [JsonProperty("_deleted")]
-        public bool Deleted { get; } = true;
+        internal bool Deleted { get; } = true;
 
-        public CouchDocumentDelete(string id, string rev)
+        internal DeleteDocument(string id, string rev)
         {
             Id = id;
             Rev = rev;

@@ -17,12 +17,12 @@ namespace OpenIddict.CouchDB.Resolvers
     /// <summary>
     /// Exposes a method allowing to resolve a scope store.
     /// </summary>
-    public class OpenIddictCouchDbScopeStoreResolver : IOpenIddictScopeStoreResolver
+    public class CouchDbOpenIddictScopeStoreResolver : IOpenIddictScopeStoreResolver
     {
         private readonly ConcurrentDictionary<Type, Type> _cache = new();
         private readonly IServiceProvider _provider;
 
-        public OpenIddictCouchDbScopeStoreResolver(IServiceProvider provider)
+        public CouchDbOpenIddictScopeStoreResolver(IServiceProvider provider)
             => _provider = provider;
 
         /// <summary>
@@ -41,12 +41,12 @@ namespace OpenIddict.CouchDB.Resolvers
 
             var type = _cache.GetOrAdd(typeof(TScope), key =>
             {
-                if (!typeof(OpenIddictCouchDbScope).IsAssignableFrom(key))
+                if (!typeof(CouchDbOpenIddictScope).IsAssignableFrom(key))
                 {
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0259));
                 }
 
-                return typeof(OpenIddictCouchDbScopeStore<>).MakeGenericType(key);
+                return typeof(CouchDbOpenIddictScopeStore<>).MakeGenericType(key);
             });
 
             return (IOpenIddictScopeStore<TScope>)_provider.GetRequiredService(type);

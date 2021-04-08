@@ -17,12 +17,12 @@ namespace OpenIddict.CouchDB.Resolvers
     /// <summary>
     /// Exposes a method allowing to resolve a token store.
     /// </summary>
-    public class OpenIddictCouchDbTokenStoreResolver : IOpenIddictTokenStoreResolver
+    public class CouchDbOpenIddictTokenStoreResolver : IOpenIddictTokenStoreResolver
     {
         private readonly ConcurrentDictionary<Type, Type> _cache = new();
         private readonly IServiceProvider _provider;
 
-        public OpenIddictCouchDbTokenStoreResolver(IServiceProvider provider)
+        public CouchDbOpenIddictTokenStoreResolver(IServiceProvider provider)
             => _provider = provider;
 
         /// <summary>
@@ -41,12 +41,12 @@ namespace OpenIddict.CouchDB.Resolvers
 
             var type = _cache.GetOrAdd(typeof(TToken), key =>
             {
-                if (!typeof(OpenIddictCouchDbToken).IsAssignableFrom(key))
+                if (!typeof(CouchDbOpenIddictToken).IsAssignableFrom(key))
                 {
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0260));
                 }
 
-                return typeof(OpenIddictCouchDbTokenStore<>).MakeGenericType(key);
+                return typeof(CouchDbOpenIddictTokenStore<>).MakeGenericType(key);
             });
 
             return (IOpenIddictTokenStore<TToken>)_provider.GetRequiredService(type);
