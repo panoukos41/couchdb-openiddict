@@ -35,10 +35,10 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the scopes stored in a database.
     /// </summary>
     /// <typeparam name="TScope">The type of the Scope entity.</typeparam>
-    public class CouchDbScopeStore<TScope> : StoreBase<TScope>, IOpenIddictScopeStore<TScope>
-        where TScope : CouchDbScope
+    public class CouchDbOpenIddictScopeStore<TScope> : OpenIddictStoreBase<TScope>, IOpenIddictScopeStore<TScope>
+        where TScope : CouchDbOpenIddictbScope
     {
-        public CouchDbScopeStore(
+        public CouchDbOpenIddictScopeStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,
             IServiceProvider provider)
             : base(options, provider)

@@ -33,22 +33,22 @@ namespace Microsoft.Extensions.DependencyInjection
             // query filtering applied by the default OpenIddict managers can be safely disabled.
             builder.DisableAdditionalFiltering();
 
-            builder.SetDefaultApplicationEntity<CouchDbApplication>()
-                   .SetDefaultAuthorizationEntity<CouchDbAuthorization>()
-                   .SetDefaultScopeEntity<CouchDbScope>()
-                   .SetDefaultTokenEntity<CouchDbToken>();
+            builder.SetDefaultApplicationEntity<CouchDbOpenIddictbApplication>()
+                   .SetDefaultAuthorizationEntity<CouchDbOpenIddictAuthorization>()
+                   .SetDefaultScopeEntity<CouchDbOpenIddictbScope>()
+                   .SetDefaultTokenEntity<CouchDbOpenIddictToken>();
 
             // Note: the Mongo stores/resolvers don't depend on scoped/transient services and thus
             // can be safely registered as singleton services and shared/reused across requests.
-            builder.ReplaceApplicationStoreResolver<CouchDbApplicationStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceAuthorizationStoreResolver<CouchDbAuthorizationStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceScopeStoreResolver<CouchDbScopeStoreResolver>(ServiceLifetime.Singleton)
-                   .ReplaceTokenStoreResolver<CouchDbTokenStoreResolver>(ServiceLifetime.Singleton);
+            builder.ReplaceApplicationStoreResolver<CouchDOpenIddictbApplicationStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceAuthorizationStoreResolver<CouchDOpenIddictbAuthorizationStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceScopeStoreResolver<CouchDbOpenIddictScopeStoreResolver>(ServiceLifetime.Singleton)
+                   .ReplaceTokenStoreResolver<CouchDbOpenIddictTokenStoreResolver>(ServiceLifetime.Singleton);
 
-            builder.Services.TryAddSingleton(typeof(CouchDbApplicationStore<>));
-            builder.Services.TryAddSingleton(typeof(CouchDbAuthorizationStore<>));
-            builder.Services.TryAddSingleton(typeof(CouchDbScopeStore<>));
-            builder.Services.TryAddSingleton(typeof(CouchDbTokenStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictApplicationStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDOpenIddictbAuthorizationStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictScopeStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictTokenStore<>));
 
             return new CouchDbOpenIddictBuilder(builder.Services);
         }

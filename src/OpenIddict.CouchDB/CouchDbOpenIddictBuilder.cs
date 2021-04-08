@@ -52,7 +52,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultApplicationEntity<TApplication>()
-            where TApplication : CouchDbApplication
+            where TApplication : CouchDbOpenIddictbApplication
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultApplicationType = typeof(TApplication));
 
@@ -64,7 +64,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultAuthorizationEntity<TAuthorization>()
-            where TAuthorization : CouchDbAuthorization
+            where TAuthorization : CouchDbOpenIddictAuthorization
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultAuthorizationType = typeof(TAuthorization));
 
@@ -76,7 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultScopeEntity<TScope>()
-            where TScope : CouchDbScope
+            where TScope : CouchDbOpenIddictbScope
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultScopeType = typeof(TScope));
 
@@ -88,7 +88,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultTokenEntity<TToken>()
-            where TToken : CouchDbToken
+            where TToken : CouchDbOpenIddictToken
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultTokenType = typeof(TToken));
 

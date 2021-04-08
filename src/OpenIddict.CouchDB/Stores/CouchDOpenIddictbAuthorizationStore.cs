@@ -34,10 +34,10 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the authorizations stored in a database.
     /// </summary>
     /// <typeparam name="TAuthorization">The type of the Authorization entity.</typeparam>
-    public class CouchDbAuthorizationStore<TAuthorization> : StoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
-        where TAuthorization : CouchDbAuthorization
+    public class CouchDOpenIddictbAuthorizationStore<TAuthorization> : OpenIddictStoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
+        where TAuthorization : CouchDbOpenIddictAuthorization
     {
-        public CouchDbAuthorizationStore(
+        public CouchDOpenIddictbAuthorizationStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,
             IServiceProvider provider)
             : base(options, provider)
@@ -97,8 +97,8 @@ namespace OpenIddict.CouchDB.Stores
             var delDb = GetDatabase<DeleteDocument>(Discriminator);
 
             // Get the tokens associated with the authorization.
-            var tokens = await GetDatabase<CouchDbToken>()
-                .GetViewAsync(Views.Token<CouchDbToken>.AuthorizationId);
+            var tokens = await GetDatabase<CouchDbOpenIddictToken>()
+                .GetViewAsync(Views.Token<CouchDbOpenIddictToken>.AuthorizationId);
 
             // Delete the tokens associated with the authorization.
             await delDb.AddOrUpdateRangeAsync(

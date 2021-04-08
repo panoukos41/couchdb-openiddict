@@ -36,10 +36,10 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the applications stored in a database.
     /// </summary>
     /// <typeparam name="TApplication">The type of the Application entity.</typeparam>
-    public class CouchDbApplicationStore<TApplication> : StoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
-        where TApplication : CouchDbApplication
+    public class CouchDbOpenIddictApplicationStore<TApplication> : OpenIddictStoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
+        where TApplication : CouchDbOpenIddictbApplication
     {
-        public CouchDbApplicationStore(
+        public CouchDbOpenIddictApplicationStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,
             IServiceProvider provider)
             : base(options, provider)
@@ -101,12 +101,12 @@ namespace OpenIddict.CouchDB.Stores
             var docsToDelete = new List<DeleteDocument>();
 
             // Get the authorizations associated with the application.
-            var auths = GetDatabase<CouchDbAuthorization>()
-                .GetViewAsync(Views.Authorization<CouchDbAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+            var auths = GetDatabase<CouchDbOpenIddictAuthorization>()
+                .GetViewAsync(Views.Authorization<CouchDbOpenIddictAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             // Get the tokens associated with the application.
-            var tokens = GetDatabase<CouchDbToken>()
-                .GetViewAsync(Views.Token<CouchDbToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+            var tokens = GetDatabase<CouchDbOpenIddictToken>()
+                .GetViewAsync(Views.Token<CouchDbOpenIddictToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             await Task.WhenAll(auths, tokens).ConfigureAwait(false);
 

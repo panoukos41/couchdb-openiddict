@@ -13,7 +13,7 @@ namespace OpenIddict.CouchDB.Internal
         static Views() => ApplyOptions(new());
 
         public static class Application<TApplication>
-            where TApplication : CouchDbApplication
+            where TApplication : CouchDbOpenIddictbApplication
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -28,7 +28,7 @@ namespace OpenIddict.CouchDB.Internal
         }
 
         public static class Authorization<TAuthorization>
-            where TAuthorization : CouchDbAuthorization
+            where TAuthorization : CouchDbOpenIddictAuthorization
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -61,7 +61,7 @@ namespace OpenIddict.CouchDB.Internal
         }
 
         public static class Scope<TScope>
-            where TScope : CouchDbScope
+            where TScope : CouchDbOpenIddictbScope
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -82,7 +82,7 @@ namespace OpenIddict.CouchDB.Internal
         }
 
         public static class Token<TToken>
-            where TToken : CouchDbToken
+            where TToken : CouchDbOpenIddictToken
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -124,10 +124,10 @@ namespace OpenIddict.CouchDB.Internal
             Check.NotNull(options, nameof(options));
             Document = options.Document;
 
-            Application<CouchDbApplication>.ApplyOptions(options);
-            Authorization<CouchDbAuthorization>.ApplyOptions(options);
-            Scope<CouchDbScope>.ApplyOptions(options);
-            Token<CouchDbToken>.ApplyOptions(options);
+            Application<CouchDbOpenIddictbApplication>.ApplyOptions(options);
+            Authorization<CouchDbOpenIddictAuthorization>.ApplyOptions(options);
+            Scope<CouchDbOpenIddictbScope>.ApplyOptions(options);
+            Token<CouchDbOpenIddictToken>.ApplyOptions(options);
         }
     }
 }

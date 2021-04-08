@@ -17,12 +17,12 @@ namespace OpenIddict.CouchDB.Resolvers
     /// <summary>
     /// Exposes a method allowing to resolve an authorization store.
     /// </summary>
-    public class CouchDbAuthorizationStoreResolver : IOpenIddictAuthorizationStoreResolver
+    public class CouchDOpenIddictbAuthorizationStoreResolver : IOpenIddictAuthorizationStoreResolver
     {
         private readonly ConcurrentDictionary<Type, Type> _cache = new();
         private readonly IServiceProvider _provider;
 
-        public CouchDbAuthorizationStoreResolver(IServiceProvider provider)
+        public CouchDOpenIddictbAuthorizationStoreResolver(IServiceProvider provider)
             => _provider = provider;
 
         /// <summary>
@@ -41,12 +41,12 @@ namespace OpenIddict.CouchDB.Resolvers
 
             var type = _cache.GetOrAdd(typeof(TAuthorization), key =>
             {
-                if (!typeof(CouchDbAuthorization).IsAssignableFrom(key))
+                if (!typeof(CouchDbOpenIddictAuthorization).IsAssignableFrom(key))
                 {
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0258));
                 }
 
-                return typeof(CouchDbAuthorizationStore<>).MakeGenericType(key);
+                return typeof(CouchDOpenIddictbAuthorizationStore<>).MakeGenericType(key);
             });
 
             return (IOpenIddictAuthorizationStore<TAuthorization>)_provider.GetRequiredService(type);

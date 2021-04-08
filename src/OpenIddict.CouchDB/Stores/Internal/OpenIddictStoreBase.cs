@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace OpenIddict.CouchDB.Stores.Internal
 {
-    public abstract class StoreBase<TStore> where TStore : CouchDocument
+    public abstract class OpenIddictStoreBase<TStore> where TStore : CouchDocument
     {
         private ICouchClient Client { get; }
 
@@ -22,7 +22,7 @@ namespace OpenIddict.CouchDB.Stores.Internal
         /// </summary>
         protected abstract string Discriminator { get; }
 
-        protected StoreBase(IOptionsMonitor<CouchDbOpenIddictOptions> options, IServiceProvider provider)
+        protected OpenIddictStoreBase(IOptionsMonitor<CouchDbOpenIddictOptions> options, IServiceProvider provider)
         {
             Options = options;
             Client = options.CurrentValue.CouchClient

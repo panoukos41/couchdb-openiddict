@@ -12,7 +12,7 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict authorization.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Subject = {Subject,nq} ; Type = {Type,nq} ; Status = {Status,nq}")]
-    public class CouchDbAuthorization : CouchDocument
+    public class CouchDbOpenIddictAuthorization : CouchDocument
     {
         /// <summary>
         /// Gets or sets the identifier of the application associated with the current authorization.

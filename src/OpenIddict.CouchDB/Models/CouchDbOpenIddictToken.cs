@@ -10,7 +10,7 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict token.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Subject = {Subject,nq} ; Type = {Type,nq} ; Status = {Status,nq}")]
-    public class CouchDbToken : CouchDocument
+    public class CouchDbOpenIddictToken : CouchDocument
     {
         /// <summary>
         /// Gets or sets the identifier of the application associated with the current token.

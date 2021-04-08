@@ -34,10 +34,10 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the tokens stored in a database.
     /// </summary>
     /// <typeparam name="TToken">The type of the Token entity.</typeparam>
-    public class CouchDbTokenStore<TToken> : StoreBase<TToken>, IOpenIddictTokenStore<TToken>
-        where TToken : CouchDbToken
+    public class CouchDbOpenIddictTokenStore<TToken> : OpenIddictStoreBase<TToken>, IOpenIddictTokenStore<TToken>
+        where TToken : CouchDbOpenIddictToken
     {
-        public CouchDbTokenStore(
+        public CouchDbOpenIddictTokenStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,
             IServiceProvider provider)
             : base(options, provider)
