@@ -12,8 +12,31 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict scope.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; Name = {Name,nq}")]
-    public class CouchDbOpenIddictbScope : CouchDocument
+    public class CouchDbOpenIddictScope : CouchDocument
     {
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictToken"/>.
+        /// </summary>
+        public CouchDbOpenIddictScope()
+        {
+        }
+
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictScope"/> from another.
+        /// </summary>
+        public CouchDbOpenIddictScope(CouchDbOpenIddictScope other)
+        {
+            Id = other.Id;
+            Rev = other.Rev;
+            Description = other.Description;
+            Descriptions = other.Descriptions;
+            DisplayName = other.DisplayName;
+            DisplayNames = other.DisplayNames;
+            Name = other.Name;
+            Properties = new JObject(other.Properties);
+            Resources = other.Resources;
+        }
+
         /// <summary>
         /// Gets or sets the public description associated with the current scope.
         /// </summary>

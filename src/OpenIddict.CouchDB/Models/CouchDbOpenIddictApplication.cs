@@ -12,8 +12,35 @@ namespace OpenIddict.CouchDB.Models
     /// Represents an OpenIddict application.
     /// </summary>
     [DebuggerDisplay("Id = {Id.ToString(),nq} ; ClientId = {ClientId,nq} ; Type = {Type,nq}")]
-    public class CouchDbOpenIddictbApplication : CouchDocument
+    public class CouchDbOpenIddictApplication : CouchDocument
     {
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictToken"/>.
+        /// </summary>
+        public CouchDbOpenIddictApplication()
+        {
+        }
+
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictApplication"/> from another.
+        /// </summary>
+        public CouchDbOpenIddictApplication(CouchDbOpenIddictApplication other)
+        {
+            Id = other.Id;
+            Rev = other.Rev;
+            ClientId = other.ClientId;
+            ClientSecret = other.ClientSecret;
+            ConsentType = other.ConsentType;
+            DisplayName = other.DisplayName;
+            DisplayNames = other.DisplayNames;
+            Permissions = other.Permissions;
+            PostLogoutRedirectUris = other.PostLogoutRedirectUris;
+            Properties = other.Properties;
+            RedirectUris = other.RedirectUris;
+            Requirements = other.Requirements;
+            Type = other.Type;
+        }
+
         /// <summary>
         /// Gets or sets the client identifier associated with the current application.
         /// </summary>

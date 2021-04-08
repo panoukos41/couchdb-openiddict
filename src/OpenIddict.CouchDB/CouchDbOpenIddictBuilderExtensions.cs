@@ -33,9 +33,9 @@ namespace Microsoft.Extensions.DependencyInjection
             // query filtering applied by the default OpenIddict managers can be safely disabled.
             builder.DisableAdditionalFiltering();
 
-            builder.SetDefaultApplicationEntity<CouchDbOpenIddictbApplication>()
+            builder.SetDefaultApplicationEntity<CouchDbOpenIddictApplication>()
                    .SetDefaultAuthorizationEntity<CouchDbOpenIddictAuthorization>()
-                   .SetDefaultScopeEntity<CouchDbOpenIddictbScope>()
+                   .SetDefaultScopeEntity<CouchDbOpenIddictScope>()
                    .SetDefaultTokenEntity<CouchDbOpenIddictToken>();
 
             // Note: the Mongo stores/resolvers don't depend on scoped/transient services and thus

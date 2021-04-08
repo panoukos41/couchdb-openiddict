@@ -37,7 +37,7 @@ namespace OpenIddict.CouchDB.Stores
     /// </summary>
     /// <typeparam name="TApplication">The type of the Application entity.</typeparam>
     public class CouchDbOpenIddictApplicationStore<TApplication> : OpenIddictStoreBase<TApplication>, IOpenIddictApplicationStore<TApplication>
-        where TApplication : CouchDbOpenIddictbApplication
+        where TApplication : CouchDbOpenIddictApplication
     {
         public CouchDbOpenIddictApplicationStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,

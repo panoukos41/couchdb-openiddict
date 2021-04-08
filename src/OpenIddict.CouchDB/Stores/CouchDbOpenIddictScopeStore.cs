@@ -36,7 +36,7 @@ namespace OpenIddict.CouchDB.Stores
     /// </summary>
     /// <typeparam name="TScope">The type of the Scope entity.</typeparam>
     public class CouchDbOpenIddictScopeStore<TScope> : OpenIddictStoreBase<TScope>, IOpenIddictScopeStore<TScope>
-        where TScope : CouchDbOpenIddictbScope
+        where TScope : CouchDbOpenIddictScope
     {
         public CouchDbOpenIddictScopeStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,

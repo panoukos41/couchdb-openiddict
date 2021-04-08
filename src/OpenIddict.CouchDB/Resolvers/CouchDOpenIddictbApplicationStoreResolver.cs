@@ -41,7 +41,7 @@ namespace OpenIddict.CouchDB.Resolvers
 
             var type = _cache.GetOrAdd(typeof(TApplication), key =>
             {
-                if (!typeof(CouchDbOpenIddictbApplication).IsAssignableFrom(key))
+                if (!typeof(CouchDbOpenIddictApplication).IsAssignableFrom(key))
                 {
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0257));
                 }

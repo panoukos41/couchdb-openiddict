@@ -52,7 +52,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultApplicationEntity<TApplication>()
-            where TApplication : CouchDbOpenIddictbApplication
+            where TApplication : CouchDbOpenIddictApplication
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultApplicationType = typeof(TApplication));
 
@@ -76,7 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The <see cref="CouchDbOpenIddictBuilder"/>.</returns>
         public CouchDbOpenIddictBuilder ReplaceDefaultScopeEntity<TScope>()
-            where TScope : CouchDbOpenIddictbScope
+            where TScope : CouchDbOpenIddictScope
         {
             Services.Configure<OpenIddictCoreOptions>(options => options.DefaultScopeType = typeof(TScope));
 

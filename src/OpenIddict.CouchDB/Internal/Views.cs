@@ -13,7 +13,7 @@ namespace OpenIddict.CouchDB.Internal
         static Views() => ApplyOptions(new());
 
         public static class Application<TApplication>
-            where TApplication : CouchDbOpenIddictbApplication
+            where TApplication : CouchDbOpenIddictApplication
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -61,7 +61,7 @@ namespace OpenIddict.CouchDB.Internal
         }
 
         public static class Scope<TScope>
-            where TScope : CouchDbOpenIddictbScope
+            where TScope : CouchDbOpenIddictScope
         {
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -124,9 +124,9 @@ namespace OpenIddict.CouchDB.Internal
             Check.NotNull(options, nameof(options));
             Document = options.Document;
 
-            Application<CouchDbOpenIddictbApplication>.ApplyOptions(options);
+            Application<CouchDbOpenIddictApplication>.ApplyOptions(options);
             Authorization<CouchDbOpenIddictAuthorization>.ApplyOptions(options);
-            Scope<CouchDbOpenIddictbScope>.ApplyOptions(options);
+            Scope<CouchDbOpenIddictScope>.ApplyOptions(options);
             Token<CouchDbOpenIddictToken>.ApplyOptions(options);
         }
     }

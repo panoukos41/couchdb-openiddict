@@ -13,6 +13,33 @@ namespace OpenIddict.CouchDB.Models
     public class CouchDbOpenIddictToken : CouchDocument
     {
         /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictToken"/>.
+        /// </summary>
+        public CouchDbOpenIddictToken()
+        {
+        }
+
+        /// <summary>
+        /// Initialize a new <see cref="CouchDbOpenIddictToken"/> from another.
+        /// </summary>
+        public CouchDbOpenIddictToken(CouchDbOpenIddictToken other)
+        {
+            Id = other.Id;
+            Rev = other.Rev;
+            ApplicationId = other.ApplicationId;
+            AuthorizationId = other.AuthorizationId;
+            CreationDate = other.CreationDate;
+            ExpirationDate = other.ExpirationDate;
+            Payload = other.Payload;
+            Properties = new JObject(other.Properties);
+            RedemptionDate = other.RedemptionDate;
+            ReferenceId = other.ReferenceId;
+            Status = other.Status;
+            Subject = other.Subject;
+            Type = other.Type;
+        }
+
+        /// <summary>
         /// Gets or sets the identifier of the application associated with the current token.
         /// </summary>
         [JsonProperty("application_id")]
