@@ -165,7 +165,7 @@ namespace OpenIddict.CouchDB.Stores
             }
 
             return (await GetDatabase()
-                .GetViewAsync(OpenIddictViews.Application<TApplication>.ClientId)
+                .GetViewAsync(OpenIddictViews.Application<TApplication>.ClientId, new() { IncludeDocs = true }, cancellationToken)
                 .ConfigureAwait(false))
                 .FirstOrDefault()
                 ?.Document;

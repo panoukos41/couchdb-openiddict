@@ -8,13 +8,17 @@ namespace OpenIddict.CouchDB.Internal
 {
     public static class OpenIddictViews
     {
+        private static CouchDbOpenIddictViewOptions options = new();
+
         public static string Document { get; set; }
 
-        static OpenIddictViews() => ApplyOptions(new());
+        static OpenIddictViews() => ApplyOptions(options);
 
         public static class Application<TApplication>
             where TApplication : CouchDbOpenIddictApplication
         {
+            static Application() => ApplyOptions(options);
+
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
@@ -50,6 +54,8 @@ namespace OpenIddict.CouchDB.Internal
         public static class Authorization<TAuthorization>
             where TAuthorization : CouchDbOpenIddictAuthorization
         {
+            static Authorization() => ApplyOptions(options);
+
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
@@ -83,6 +89,8 @@ namespace OpenIddict.CouchDB.Internal
         public static class Scope<TScope>
             where TScope : CouchDbOpenIddictScope
         {
+            static Scope() => ApplyOptions(options);
+
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
@@ -111,6 +119,8 @@ namespace OpenIddict.CouchDB.Internal
         public static class Token<TToken>
             where TToken : CouchDbOpenIddictToken
         {
+            static Token() => ApplyOptions(options);
+
             /// <summary>
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
