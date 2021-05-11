@@ -5,6 +5,15 @@
       "reduce": "_count",
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.application') {\n    emit(doc._id, doc._rev);\n  }\n}"
     },
+    "application.client_id": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.application') {\n    emit(doc.client_id, doc._rev);\n  }\n}"
+    },
+    "application.redirect_uris": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.application') {\n    doc.redirect_uris.forEach(uri => {\n      emit(uri, doc._rev);\n    })\n  }\n}"
+    },
+    "application.post_logout_redirect_uris": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.application') {\n    doc.post_logout_redirect_uris.forEach(uri => {\n      emit(uri, doc._rev);\n    })\n  }\n}"
+    },
     "authorization": {
       "reduce": "_count",
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.authorization') {\n    emit(doc._id, doc._rev);\n  }\n}"
@@ -25,6 +34,9 @@
     "scope.name": {
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.scope') {\n    emit(doc.name, doc._rev);\n  }\n}"
     },
+    "scope.resources": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.scope') {\n    doc.resources.forEach(resource => {\n      emit(resource, doc._rev);\n    })\n  }\n}"
+    },
     "token": {
       "reduce": "_count",
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc._id, doc._rev);\n  }\n}"
@@ -34,6 +46,12 @@
     },
     "token.authorization_id": {
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc.authorization_id, doc._rev);\n  }\n}"
+    },
+    "token.reference_id": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc.reference_id, doc._rev);\n  }\n}"
+    },
+    "token.subject": {
+      "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token') {\n    emit(doc.subject, doc._rev);\n  }\n}"
     },
     "token.prune": {
       "map": "function (doc) {\n  if (doc.split_discriminator == 'openiddict.token' && doc.status != 'inactive' && doc.status != 'valid') {\n    emit([doc.creation_date, doc.expiration_date], doc._rev);\n  }\n}"

@@ -2,13 +2,13 @@
 
 namespace OpenIddict.CouchDB.Internal
 {
-    public class View<TKey, TValue, TDoc> where TDoc : CouchDocument
+    public class OpenIddictView<TKey, TValue, TDoc> where TDoc : CouchDocument
     {
         public string Design { get; }
 
         public string Value { get; }
 
-        public View(string design, string view)
+        public OpenIddictView(string design, string view)
         {
             Design = design;
             Value = view;

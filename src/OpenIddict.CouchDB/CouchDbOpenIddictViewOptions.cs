@@ -9,15 +9,21 @@
         {
             Document = "openiddict";
             Application = "application";
+            ApplicationClientId = "application.client_id";
+            ApplicationRedirectUri = "application.redirect_uris";
+            ApplicationPostLogoutRedirectUri = "application.post_logout_redirect_uris";
             Authorization = "authorization";
             AuthorizationApplicationId = "authorization.application_id";
             AuthorizationSubject = "authorization.subject";
             AuthorizationPrune = "authorization.prune";
             Scope = "scope";
             ScopeName = "scope.name";
+            ScopeResources = "scope.resources";
             Token = "token";
             TokenApplicationId = "token.application_id";
             TokenAuthorizationId = "token.authorization_id";
+            TokenReferenceId = "token.reference_id";
+            TokenSubject = "token.subject";
             TokenPrune = "token.prune";
         }
 
@@ -31,6 +37,23 @@
         /// When reduce = false (manual) then Key = Id, Value = Rev
         /// </summary>
         public string Application { get; set; }
+
+        /// <summary>
+        /// Key = ClientId, Value = Rev
+        /// </summary>
+        public string ApplicationClientId { get; set; }
+
+        /// <summary>
+        /// Key = RedirectUri, Value = Rev
+        /// </summary>
+        /// <remarks>Each URI for each application is returned as a single row.</remarks>
+        public string ApplicationRedirectUri { get; set; }
+
+        /// <summary>
+        /// Key = PostLogoutRedirectUri, Value = Rev
+        /// </summary>
+        /// <remarks>Each URI for each application is returned as a single row.</remarks>
+        public string ApplicationPostLogoutRedirectUri { get; set; }
 
         /// <summary>
         /// With reduce = true (default) then Key = null, Value = 'count'<br/>
@@ -65,6 +88,11 @@
         public string ScopeName { get; set; }
 
         /// <summary>
+        /// Key = ScopeResource, Value = Rev
+        /// </summary>
+        public string ScopeResources { get; set; }
+
+        /// <summary>
         /// With reduce = true (default) then Key = null, Value = 'count'<br/>
         /// When reduce = false (manual) then Key = Id, Value = Rev
         /// </summary>
@@ -79,6 +107,16 @@
         /// Key = AuthorizationId, Value = Rev
         /// </summary>
         public string TokenAuthorizationId { get; set; }
+        
+        /// <summary>
+        /// Key = ReferenceId, Value = Rev
+        /// </summary>
+        public string TokenReferenceId { get; set; }
+        
+        /// <summary>
+        /// Key = Subject, Value = Rev
+        /// </summary>
+        public string TokenSubject { get; set; }
 
         /// <summary>
         /// Key = [CreationDate, ExpirationDate] , Value = Rev

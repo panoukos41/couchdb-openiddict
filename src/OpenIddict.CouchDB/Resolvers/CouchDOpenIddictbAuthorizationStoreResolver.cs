@@ -46,7 +46,7 @@ namespace OpenIddict.CouchDB.Resolvers
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0258));
                 }
 
-                return typeof(CouchDOpenIddictbAuthorizationStore<>).MakeGenericType(key);
+                return typeof(CouchDbOpenIddictAuthorizationStore<>).MakeGenericType(key);
             });
 
             return (IOpenIddictAuthorizationStore<TAuthorization>)_provider.GetRequiredService(type);
