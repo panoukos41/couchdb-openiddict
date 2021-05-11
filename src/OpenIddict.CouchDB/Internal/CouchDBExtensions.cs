@@ -11,7 +11,7 @@ namespace CouchDB.Driver
     {
         internal static Task<List<CouchView<TKey, TValue, TDoc>>> GetViewAsync<TKey, TValue, TDoc>(
             this ICouchDatabase<TDoc> db,
-            View<TKey, TValue, TDoc> view,
+            OpenIddictView<TKey, TValue, TDoc> view,
             CouchViewOptions<TKey>? options = null,
             CancellationToken cancellationToken = default)
             where TDoc : CouchDocument
@@ -21,7 +21,7 @@ namespace CouchDB.Driver
 
         internal static Task<CouchViewList<TKey, TValue, TDoc>> GetDetailedViewAsync<TKey, TValue, TDoc>(
             this ICouchDatabase<TDoc> db,
-            View<TKey, TValue, TDoc> view,
+            OpenIddictView<TKey, TValue, TDoc> view,
             CouchViewOptions<TKey>? options = null,
             CancellationToken cancellationToken = default)
             where TDoc : CouchDocument

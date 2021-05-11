@@ -63,7 +63,7 @@ namespace OpenIddict.CouchDB
             set
             {
                 _viewOptions = value;
-                Views.ApplyOptions(_viewOptions);
+                OpenIddictViews.ApplyOptions(_viewOptions);
             }
         }
     }

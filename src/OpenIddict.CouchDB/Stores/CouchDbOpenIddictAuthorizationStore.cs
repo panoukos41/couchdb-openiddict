@@ -34,10 +34,10 @@ namespace OpenIddict.CouchDB.Stores
     /// Provides methods allowing to manage the authorizations stored in a database.
     /// </summary>
     /// <typeparam name="TAuthorization">The type of the Authorization entity.</typeparam>
-    public class CouchDOpenIddictbAuthorizationStore<TAuthorization> : OpenIddictStoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
+    public class CouchDbOpenIddictAuthorizationStore<TAuthorization> : OpenIddictStoreBase<TAuthorization>, IOpenIddictAuthorizationStore<TAuthorization>
         where TAuthorization : CouchDbOpenIddictAuthorization
     {
-        public CouchDOpenIddictbAuthorizationStore(
+        public CouchDbOpenIddictAuthorizationStore(
             IOptionsMonitor<CouchDbOpenIddictOptions> options,
             IServiceProvider provider)
             : base(options, provider)
@@ -48,28 +48,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         protected override string Discriminator { get; }
 
-        /// <inheritdoc/>
-        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
-        {
-            var value = (await GetDatabase()
-                .GetViewAsync(Views.Authorization<TAuthorization>.Authorizations, cancellationToken: cancellationToken))
-                .FirstOrDefault()?.Value;
-
-            if (long.TryParse(value, out long count))
-            {
-                return count;
-            }
-            return 0;
-        }
-
-        /// <inheritdoc/>
-        public virtual ValueTask<long> CountAsync<TResult>(
-            Func<IQueryable<TAuthorization>, IQueryable<TResult>> query, CancellationToken cancellationToken)
-        {
-            Check.NotNull(query, nameof(query));
-
-            return new(query(QueryDb()).LongCount());
-        }
+        #region CRUD
 
         /// <inheritdoc/>
         public virtual async ValueTask CreateAsync(TAuthorization authorization, CancellationToken cancellationToken)
@@ -77,6 +56,22 @@ namespace OpenIddict.CouchDB.Stores
             Check.NotNull(authorization, nameof(authorization));
 
             await GetDatabase().AddAsync(authorization, cancellationToken: cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public virtual async ValueTask UpdateAsync(TAuthorization authorization, CancellationToken cancellationToken)
+        {
+            Check.NotNull(authorization, nameof(authorization));
+
+            var db = GetDatabase();
+            try
+            {
+                await db.AddOrUpdateAsync(authorization, cancellationToken: cancellationToken);
+            }
+            catch (CouchConflictException ex)
+            {
+                throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0241), ex);
+            }
         }
 
         /// <inheritdoc/>
@@ -98,11 +93,109 @@ namespace OpenIddict.CouchDB.Stores
 
             // Get the tokens associated with the authorization.
             var tokens = await GetDatabase<CouchDbOpenIddictToken>()
-                .GetViewAsync(Views.Token<CouchDbOpenIddictToken>.AuthorizationId);
+                .GetViewAsync(OpenIddictViews.Token<CouchDbOpenIddictToken>.AuthorizationId);
 
             // Delete the tokens associated with the authorization.
             await delDb.AddOrUpdateRangeAsync(
                 tokens.Select(x => new DeleteDocument(x.Id, x.Value)).ToArray());
+        }
+
+        #endregion
+
+        #region Count
+
+        /// <inheritdoc/>
+        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
+        {
+            var value = (await GetDatabase()
+                .GetViewAsync(OpenIddictViews.Authorization<TAuthorization>.Authorizations, cancellationToken: cancellationToken))
+                .FirstOrDefault()?.Value;
+
+            if (long.TryParse(value, out long count))
+            {
+                return count;
+            }
+            return 0;
+        }
+
+        /// <inheritdoc/>
+        public virtual ValueTask<long> CountAsync<TResult>(
+            Func<IQueryable<TAuthorization>, IQueryable<TResult>> query, CancellationToken cancellationToken)
+        {
+            Check.NotNull(query, nameof(query));
+
+            return new(query(QueryDb()).LongCount());
+        }
+
+        #endregion
+
+        #region Find
+
+        /// <inheritdoc/>
+        public virtual async ValueTask<TAuthorization?> FindByIdAsync(string identifier, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(identifier))
+            {
+                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
+            }
+
+            return await GetDatabase().FindAsync(identifier, cancellationToken: cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public virtual IAsyncEnumerable<TAuthorization> FindByApplicationIdAsync(
+            string identifier, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(identifier))
+            {
+                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
+            }
+
+            return ExecuteAsync(cancellationToken);
+
+            async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+            {
+                var options = new CouchViewOptions<string>
+                {
+                    IncludeDocs = true,
+                    Key = identifier
+                };
+
+                foreach (var row in await GetDatabase()
+                    .GetViewAsync(OpenIddictViews.Authorization<TAuthorization>.ApplicationId, options, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    yield return row.Document;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public virtual IAsyncEnumerable<TAuthorization> FindBySubjectAsync(
+            string subject, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(subject))
+            {
+                throw new ArgumentException(SR.GetResourceString(SR.ID0198), nameof(subject));
+            }
+
+            return ExecuteAsync(cancellationToken);
+
+            async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+            {
+                var options = new CouchViewOptions<string>
+                {
+                    IncludeDocs = true,
+                    Key = subject
+                };
+
+                foreach (var row in await GetDatabase()
+                    .GetViewAsync(OpenIddictViews.Authorization<TAuthorization>.Subject, options, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    yield return row.Document;
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -123,9 +216,11 @@ namespace OpenIddict.CouchDB.Stores
 
             async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                foreach (var authorization in await QueryDb().Where(authorization =>
-                     authorization.Subject == subject &&
-                     authorization.ApplicationId == client).ToCouchListAsync(cancellationToken))
+                foreach (var authorization in await QueryDb()
+                    .Where(authorization =>
+                        authorization.Subject == subject &&
+                        authorization.ApplicationId == client)
+                    .ToCouchListAsync(cancellationToken))
                 {
                     yield return authorization;
                 }
@@ -156,10 +251,12 @@ namespace OpenIddict.CouchDB.Stores
 
             async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                foreach (var authorization in await QueryDb().Where(authorization =>
-                    authorization.Subject == subject &&
-                    authorization.ApplicationId == client &&
-                    authorization.Status == status).ToCouchListAsync(cancellationToken))
+                foreach (var authorization in await QueryDb()
+                    .Where(authorization =>
+                        authorization.Subject == subject &&
+                        authorization.ApplicationId == client &&
+                        authorization.Status == status)
+                    .ToCouchListAsync(cancellationToken))
                 {
                     yield return authorization;
                 }
@@ -195,11 +292,13 @@ namespace OpenIddict.CouchDB.Stores
 
             async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                foreach (var authorization in await QueryDb().Where(authorization =>
-                    authorization.Subject == subject &&
-                    authorization.ApplicationId == client &&
-                    authorization.Status == status &&
-                    authorization.Type == type).ToCouchListAsync(cancellationToken))
+                foreach (var authorization in await QueryDb()
+                    .Where(authorization =>
+                        authorization.Subject == subject &&
+                        authorization.ApplicationId == client &&
+                        authorization.Status == status &&
+                        authorization.Type == type)
+                    .ToCouchListAsync(cancellationToken))
                 {
                     yield return authorization;
                 }
@@ -237,86 +336,150 @@ namespace OpenIddict.CouchDB.Stores
             {
                 // Note: Enumerable.All() is deliberately used without the extension method syntax to ensure
                 // ImmutableArrayExtensions.All() (which is not supported by MongoDB) is not used instead.
-                foreach (var authorization in await QueryDb().Where(authorization =>
-                    authorization.Subject == subject &&
-                    authorization.ApplicationId == client &&
-                    authorization.Status == status &&
-                    authorization.Type == type &&
-                    //authorization.Scopes.All(scope => authorization.Scopes.Contains(scope))).ToAsyncEnumerable(cancellationToken))
-                    Enumerable.All(scopes, scope => authorization.Scopes.Contains(scope))).ToCouchListAsync(cancellationToken))
+                foreach (var authorization in await QueryDb()
+                    .Where(authorization =>
+                        authorization.Subject == subject &&
+                        authorization.ApplicationId == client &&
+                        authorization.Status == status &&
+                        authorization.Type == type &&
+                        //authorization.Scopes.All(scope => authorization.Scopes.Contains(scope))).ToAsyncEnumerable(cancellationToken))
+                        Enumerable.All(scopes, scope => authorization.Scopes.Contains(scope)))
+                    .ToCouchListAsync(cancellationToken))
                 {
                     yield return authorization;
                 }
             }
         }
 
+        #endregion
+
+        #region Query
+
         /// <inheritdoc/>
-        public virtual IAsyncEnumerable<TAuthorization> FindByApplicationIdAsync(
-            string identifier, CancellationToken cancellationToken)
+        public virtual async ValueTask<TResult> GetAsync<TState, TResult>(
+            Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
+            TState state, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(identifier))
+            Check.NotNull(query, nameof(query));
+
+            return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public virtual async IAsyncEnumerable<TAuthorization> ListAsync(
+            int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var options = new CouchViewOptions<string>
             {
-                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
+                Reduce = false,
+                IncludeDocs = true,
+                Limit = count,
+                Skip = offset ?? 0
+            };
+
+            foreach (var row in await GetDatabase()
+                .GetViewAsync(OpenIddictViews.Authorization<TAuthorization>.Authorizations, options, cancellationToken)
+                .ConfigureAwait(false))
+            {
+                yield return row.Document;
             }
+        }
+
+        /// <inheritdoc/>
+        public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(
+            Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
+            TState state, CancellationToken cancellationToken)
+        {
+            Check.NotNull(query, nameof(query));
 
             return ExecuteAsync(cancellationToken);
 
-            async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+            async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                var options = new CouchViewOptions<string>
+                foreach (var element in await Task.Run(() => query(QueryDb(), state)))
                 {
-                    IncludeDocs = true,
-                    Key = identifier
-                };
-
-                foreach (var row in await GetDatabase()
-                    .GetViewAsync(Views.Authorization<TAuthorization>.ApplicationId, options, cancellationToken)
-                    .ConfigureAwait(false))
-                {
-                    yield return row.Document;
+                    yield return element;
                 }
             }
         }
 
-        /// <inheritdoc/>
-        public virtual async ValueTask<TAuthorization?> FindByIdAsync(string identifier, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrEmpty(identifier))
-            {
-                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
-            }
-
-            var db = GetDatabase();
-            return await db.FindAsync(identifier, cancellationToken: cancellationToken);
-        }
+        #endregion
 
         /// <inheritdoc/>
-        public virtual IAsyncEnumerable<TAuthorization> FindBySubjectAsync(
-            string subject, CancellationToken cancellationToken)
+        public virtual async ValueTask PruneAsync(DateTimeOffset threshold, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(subject))
+            // todo: Prune Authorization
+
+            const int take = 10_000;
+
+            var options = new CouchViewOptions<DateTime[]>
             {
-                throw new ArgumentException(SR.GetResourceString(SR.ID0198), nameof(subject));
+                Descending = true,
+                StartKey = new DateTime[] { threshold.DateTime, DateTime.UtcNow }
+            };
+
+            var tokens = await GetDatabase().GetViewAsync(OpenIddictViews.Authorization<TAuthorization>.Prune, options, cancellationToken);
+
+            var delDb = GetDatabase<DeleteDocument>();
+            while (tokens.Count != 0)
+            {
+                var toDelete = tokens.Take(take)
+                    .Select(x => new DeleteDocument(x.Id, x.Value))
+                    .ToArray();
+
+                await delDb.AddOrUpdateRangeAsync(toDelete, cancellationToken);
+
+                tokens.RemoveRange(0, take);
             }
 
-            return ExecuteAsync(cancellationToken);
+            //var database = await Context.GetDatabaseAsync(cancellationToken);
+            //var collection = database.GetCollection<TAuthorization>(Options.CurrentValue.AuthorizationsCollectionName);
 
-            async IAsyncEnumerable<TAuthorization> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
-            {
-                var options = new CouchViewOptions<string>
-                {
-                    IncludeDocs = true,
-                    Key = subject
-                };
+            //// Note: directly deleting the resulting set of an aggregate query is not supported by MongoDB.
+            //// To work around this limitation, the authorization identifiers are stored in an intermediate
+            //// list and delete requests are sent to remove the documents corresponding to these identifiers.
 
-                foreach (var row in await GetDatabase()
-                    .GetViewAsync(Views.Authorization<TAuthorization>.Subject, options, cancellationToken)
-                    .ConfigureAwait(false))
-                {
-                    yield return row.Document;
-                }
-            }
+            //var identifiers =
+            //    await (from authorization in collection.AsQueryable()
+            //           join token in database.GetCollection<OpenIddictMongoDbToken>(Options.CurrentValue.TokensCollectionName).AsQueryable()
+            //                      on authorization.Id equals token.AuthorizationId into tokens
+            //           where authorization.CreationDate < threshold.UtcDateTime
+            //           where authorization.Status != Statuses.Valid ||
+            //                (authorization.Type == AuthorizationTypes.AdHoc && !tokens.Any())
+            //           select authorization.Id).ToListAsync(cancellationToken);
+
+            //// Note: to avoid generating delete requests with very large filters, a buffer is used here and the
+            //// maximum number of elements that can be removed by a single call to PruneAsync() is limited to 50000.
+            //foreach (var buffer in Buffer(identifiers.Take(50_000), 1_000))
+            //{
+            //    await collection.DeleteManyAsync(authorization => buffer.Contains(authorization.Id), cancellationToken);
+            //}
+
+            //static IEnumerable<List<TSource>> Buffer<TSource>(IEnumerable<TSource> source, int count)
+            //{
+            //    List<TSource>? buffer = null;
+
+            //    foreach (var element in source)
+            //    {
+            //        buffer ??= new List<TSource>(capacity: 1);
+            //        buffer.Add(element);
+
+            //        if (buffer.Count == count)
+            //        {
+            //            yield return buffer;
+
+            //            buffer = null;
+            //        }
+            //    }
+
+            //    if (buffer is not null)
+            //    {
+            //        yield return buffer;
+            //    }
+            //}
         }
+
+        #region Get/Set
 
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetApplicationIdAsync(TAuthorization authorization, CancellationToken cancellationToken)
@@ -329,16 +492,6 @@ namespace OpenIddict.CouchDB.Stores
             }
 
             return new ValueTask<string?>(authorization.ApplicationId.ToString());
-        }
-
-        /// <inheritdoc/>
-        public virtual async ValueTask<TResult> GetAsync<TState, TResult>(
-            Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
-            TState state, CancellationToken cancellationToken)
-        {
-            Check.NotNull(query, nameof(query));
-
-            return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -432,117 +585,6 @@ namespace OpenIddict.CouchDB.Stores
                 return new ValueTask<TAuthorization>(Task.FromException<TAuthorization>(
                     new InvalidOperationException(SR.GetResourceString(SR.ID0242), exception)));
             }
-        }
-
-        /// <inheritdoc/>
-        public virtual async IAsyncEnumerable<TAuthorization> ListAsync(
-            int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            var options = new CouchViewOptions<string>
-            {
-                Reduce = false,
-                IncludeDocs = true,
-                Limit = count,
-                Skip = offset ?? 0
-            };
-
-            foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Authorization<TAuthorization>.Authorizations, options, cancellationToken)
-                .ConfigureAwait(false))
-            {
-                yield return row.Document;
-            }
-        }
-
-        /// <inheritdoc/>
-        public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(
-            Func<IQueryable<TAuthorization>, TState, IQueryable<TResult>> query,
-            TState state, CancellationToken cancellationToken)
-        {
-            Check.NotNull(query, nameof(query));
-
-            return ExecuteAsync(cancellationToken);
-
-            async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
-            {
-                foreach (var element in await Task.Run(() => query(QueryDb(), state)))
-                {
-                    yield return element;
-                }
-            }
-        }
-
-        /// <inheritdoc/>
-        public virtual async ValueTask PruneAsync(DateTimeOffset threshold, CancellationToken cancellationToken)
-        {
-            // todo: Prune Authorization
-
-            const int take = 10_000;
-
-            var options = new CouchViewOptions<DateTime[]>
-            {
-                Descending = true,
-                StartKey = new DateTime[] { threshold.DateTime, DateTime.UtcNow }
-            };
-            var tokens = await GetDatabase().GetViewAsync(Views.Authorization<TAuthorization>.Prune, options, cancellationToken);
-
-            var delDb = GetDatabase<DeleteDocument>();
-            while (tokens.Count != 0)
-            {
-                var toDelete = tokens.Take(take)
-                    .Select(x => new DeleteDocument(x.Id, x.Value))
-                    .ToArray();
-
-                await delDb.AddOrUpdateRangeAsync(toDelete, cancellationToken);
-
-                tokens.RemoveRange(0, take);
-            }
-
-            //var database = await Context.GetDatabaseAsync(cancellationToken);
-            //var collection = database.GetCollection<TAuthorization>(Options.CurrentValue.AuthorizationsCollectionName);
-
-            //// Note: directly deleting the resulting set of an aggregate query is not supported by MongoDB.
-            //// To work around this limitation, the authorization identifiers are stored in an intermediate
-            //// list and delete requests are sent to remove the documents corresponding to these identifiers.
-
-            //var identifiers =
-            //    await (from authorization in collection.AsQueryable()
-            //           join token in database.GetCollection<OpenIddictMongoDbToken>(Options.CurrentValue.TokensCollectionName).AsQueryable()
-            //                      on authorization.Id equals token.AuthorizationId into tokens
-            //           where authorization.CreationDate < threshold.UtcDateTime
-            //           where authorization.Status != Statuses.Valid ||
-            //                (authorization.Type == AuthorizationTypes.AdHoc && !tokens.Any())
-            //           select authorization.Id).ToListAsync(cancellationToken);
-
-            //// Note: to avoid generating delete requests with very large filters, a buffer is used here and the
-            //// maximum number of elements that can be removed by a single call to PruneAsync() is limited to 50000.
-            //foreach (var buffer in Buffer(identifiers.Take(50_000), 1_000))
-            //{
-            //    await collection.DeleteManyAsync(authorization => buffer.Contains(authorization.Id), cancellationToken);
-            //}
-
-            //static IEnumerable<List<TSource>> Buffer<TSource>(IEnumerable<TSource> source, int count)
-            //{
-            //    List<TSource>? buffer = null;
-
-            //    foreach (var element in source)
-            //    {
-            //        buffer ??= new List<TSource>(capacity: 1);
-            //        buffer.Add(element);
-
-            //        if (buffer.Count == count)
-            //        {
-            //            yield return buffer;
-
-            //            buffer = null;
-            //        }
-            //    }
-
-            //    if (buffer is not null)
-            //    {
-            //        yield return buffer;
-            //    }
-            //}
         }
 
         /// <inheritdoc/>
@@ -658,20 +700,6 @@ namespace OpenIddict.CouchDB.Stores
             return default;
         }
 
-        /// <inheritdoc/>
-        public virtual async ValueTask UpdateAsync(TAuthorization authorization, CancellationToken cancellationToken)
-        {
-            Check.NotNull(authorization, nameof(authorization));
-
-            var db = GetDatabase();
-            try
-            {
-                await db.AddOrUpdateAsync(authorization, cancellationToken: cancellationToken);
-            }
-            catch (CouchConflictException ex)
-            {
-                throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0241), ex);
-            }
-        }
+        #endregion
     }
 }

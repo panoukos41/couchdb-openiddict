@@ -6,11 +6,11 @@ using System;
 
 namespace OpenIddict.CouchDB.Internal
 {
-    public static class Views
+    public static class OpenIddictViews
     {
         public static string Document { get; set; }
 
-        static Views() => ApplyOptions(new());
+        static OpenIddictViews() => ApplyOptions(new());
 
         public static class Application<TApplication>
             where TApplication : CouchDbOpenIddictApplication
@@ -19,11 +19,31 @@ namespace OpenIddict.CouchDB.Internal
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TApplication> Applications { get; set; }
+            public static OpenIddictView<string, string, TApplication> Applications { get; set; }
+            
+            /// <summary>
+            /// Key = ClientId, Value = Rev
+            /// </summary>
+            public static OpenIddictView<string, string, TApplication> ClientId { get; set; }
+            
+            /// <summary>
+            /// Key = RedirectUri, Value = Rev
+            /// </summary>
+            /// <remarks>Each URI for each application is returned as a single row.</remarks>
+            public static OpenIddictView<string, string, TApplication> RedirectUris { get; set; }
 
+            /// <summary>
+            /// Key = PostLogoutRedirectUri, Value = Rev
+            /// </summary>
+            /// <remarks>Each URI for each application is returned as a single row.</remarks>
+            public static OpenIddictView<string, string, TApplication> PostLogoutRedirectUris { get; set; }
+            
             public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
             {
                 Applications = new(Document, options.Application);
+                ClientId = new(Document, options.ApplicationClientId);
+                RedirectUris = new(Document, options.ApplicationRedirectUri);
+                PostLogoutRedirectUris = new(Document, options.ApplicationPostLogoutRedirectUri);
             }
         }
 
@@ -34,22 +54,22 @@ namespace OpenIddict.CouchDB.Internal
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> Authorizations { get; set; }
+            public static OpenIddictView<string, string, TAuthorization> Authorizations { get; set; }
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> ApplicationId { get; set; }
+            public static OpenIddictView<string, string, TAuthorization> ApplicationId { get; set; }
 
             /// <summary>
             /// Key = Subject, Value = Rev
             /// </summary>
-            public static View<string, string, TAuthorization> Subject { get; set; }
+            public static OpenIddictView<string, string, TAuthorization> Subject { get; set; }
 
             /// <summary>
             /// Key = [ CreationDate, ExpirationDate ] , Value = Rev
             /// </summary>
-            public static View<DateTime[], string, TAuthorization> Prune { get; set; }
+            public static OpenIddictView<DateTime[], string, TAuthorization> Prune { get; set; }
 
             public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
             {
@@ -67,17 +87,24 @@ namespace OpenIddict.CouchDB.Internal
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TScope> Scopes { get; set; }
+            public static OpenIddictView<string, string, TScope> Scopes { get; set; }
 
             /// <summary>
             /// Key = Name, Value = Rev
             /// </summary>
-            public static View<string, string, TScope> Name { get; set; }
+            public static OpenIddictView<string, string, TScope> Name { get; set; }
+            
+            /// <summary>
+            /// Key = Resource, Value = Rev
+            /// </summary>
+            /// <remarks>Each Resource for each scope is returned as a single row.</remarks>
+            public static OpenIddictView<string, string, TScope> Resources { get; set; }
 
             public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
             {
                 Scopes = new(Document, options.Scope);
                 Name = new(Document, options.ScopeName);
+                Resources = new(Document, options.ScopeResources);
             }
         }
 
@@ -88,29 +115,41 @@ namespace OpenIddict.CouchDB.Internal
             /// With reduce = true (default) then Key = null, Value = 'count'<br/>
             /// When reduce = false (manual) then Key = Id, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> Tokens { get; set; }
+            public static OpenIddictView<string, string, TToken> Tokens { get; set; }
 
             /// <summary>
             /// Key = ApplicationId, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> ApplicationId { get; set; }
+            public static OpenIddictView<string, string, TToken> ApplicationId { get; set; }
 
             /// <summary>
             /// Key = AuthorizationId, Value = Rev
             /// </summary>
-            public static View<string, string, TToken> AuthorizationId { get; set; }
+            public static OpenIddictView<string, string, TToken> AuthorizationId { get; set; }
+            
+            /// <summary>
+            /// Key = ReferenceId, Value = Rev
+            /// </summary>
+            public static OpenIddictView<string, string, TToken> ReferenceId { get; set; }
+
+            /// <summary>
+            /// Key = Subject, Value = Rev
+            /// </summary>
+            public static OpenIddictView<string, string, TToken> Subject { get; set; }
 
             /// <summary>
             /// Key = [CreationDate, ExpirationDate] , Value = Rev
             /// </summary>
             /// <remarks>
-            public static View<DateTime[], string, TToken> Prune { get; set; }
+            public static OpenIddictView<DateTime[], string, TToken> Prune { get; set; }
 
             public static void ApplyOptions(CouchDbOpenIddictViewOptions options)
             {
                 Tokens = new(Document, options.Token);
                 ApplicationId = new(Document, options.TokenApplicationId);
                 AuthorizationId = new(Document, options.TokenAuthorizationId);
+                ReferenceId = new(Document, options.TokenReferenceId);
+                Subject = new(Document, options.TokenSubject);
                 Prune = new(Document, options.TokenPrune);
             }
         }

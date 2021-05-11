@@ -50,28 +50,7 @@ namespace OpenIddict.CouchDB.Stores
         /// <inheritdoc/>
         protected override string Discriminator { get; }
 
-        /// <inheritdoc/>
-        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
-        {
-            var value = (await GetDatabase()
-                .GetViewAsync(Views.Application<TApplication>.Applications, cancellationToken: cancellationToken))
-                .FirstOrDefault()?.Value;
-
-            if (long.TryParse(value, out var count))
-            {
-                return count;
-            }
-            return 0;
-        }
-
-        /// <inheritdoc/>
-        public virtual ValueTask<long> CountAsync<TResult>(
-            Func<IQueryable<TApplication>, IQueryable<TResult>> query, CancellationToken cancellationToken)
-        {
-            Check.NotNull(query, nameof(query));
-
-            return new(query(QueryDb()).LongCount());
-        }
+        #region CRUD
 
         /// <inheritdoc/>
         public virtual async ValueTask CreateAsync(TApplication application,
@@ -80,6 +59,22 @@ namespace OpenIddict.CouchDB.Stores
             Check.NotNull(application, nameof(application));
 
             await GetDatabase().AddAsync(application, cancellationToken: cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public virtual async ValueTask UpdateAsync(TApplication application,
+            CancellationToken cancellationToken)
+        {
+            Check.NotNull(application, nameof(application));
+
+            try
+            {
+                await GetDatabase().AddOrUpdateAsync(application, cancellationToken: cancellationToken);
+            }
+            catch (CouchConflictException ex)
+            {
+                throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0239), ex);
+            }
         }
 
         /// <inheritdoc/>
@@ -102,11 +97,11 @@ namespace OpenIddict.CouchDB.Stores
 
             // Get the authorizations associated with the application.
             var auths = GetDatabase<CouchDbOpenIddictAuthorization>()
-                .GetViewAsync(Views.Authorization<CouchDbOpenIddictAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+                .GetViewAsync(OpenIddictViews.Authorization<CouchDbOpenIddictAuthorization>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             // Get the tokens associated with the application.
             var tokens = GetDatabase<CouchDbOpenIddictToken>()
-                .GetViewAsync(Views.Token<CouchDbOpenIddictToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
+                .GetViewAsync(OpenIddictViews.Token<CouchDbOpenIddictToken>.ApplicationId, new() { Key = application.Id }, cancellationToken);
 
             await Task.WhenAll(auths, tokens).ConfigureAwait(false);
 
@@ -115,6 +110,49 @@ namespace OpenIddict.CouchDB.Stores
             docsToDelete.AddRange(tokens.Result.Select(x => new DeleteDocument(x.Id, x.Value)));
 
             await delDb.AddOrUpdateRangeAsync(docsToDelete).ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region Count
+
+        /// <inheritdoc/>
+        public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
+        {
+            var value = (await GetDatabase()
+                .GetViewAsync(OpenIddictViews.Application<TApplication>.Applications, cancellationToken: cancellationToken))
+                .FirstOrDefault()?.Value;
+
+            if (long.TryParse(value, out var count))
+            {
+                return count;
+            }
+            return 0;
+        }
+
+        /// <inheritdoc/>
+        public virtual ValueTask<long> CountAsync<TResult>(
+            Func<IQueryable<TApplication>, IQueryable<TResult>> query, CancellationToken cancellationToken)
+        {
+            Check.NotNull(query, nameof(query));
+
+            return new(query(QueryDb()).LongCount());
+        }
+
+        #endregion
+
+        #region Find
+
+        /// <inheritdoc/>
+        public virtual async ValueTask<TApplication?> FindByIdAsync(string identifier,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(identifier))
+            {
+                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
+            }
+
+            return await GetDatabase().FindAsync(identifier, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -126,45 +164,11 @@ namespace OpenIddict.CouchDB.Stores
                 throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
             }
 
-            return (await QueryDb()
-                .Where(x => x.ClientId == identifier)
-                .Take(1)
-                .ToCouchListAsync(cancellationToken))
-                .FirstOrDefault();
-        }
-
-        /// <inheritdoc/>
-        public virtual async ValueTask<TApplication?> FindByIdAsync(string identifier,
-            CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrEmpty(identifier))
-            {
-                throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
-            }
-
-            var db = GetDatabase();
-            return await db.FindAsync(identifier, cancellationToken: cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public virtual IAsyncEnumerable<TApplication> FindByPostLogoutRedirectUriAsync(
-            string address, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrEmpty(address))
-            {
-                throw new ArgumentException(SR.GetResourceString(SR.ID0143), nameof(address));
-            }
-
-            return ExecuteAsync(cancellationToken);
-
-            async IAsyncEnumerable<TApplication> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
-            {
-                foreach (var application in await QueryDb().Where(app =>
-                    app.PostLogoutRedirectUris.Contains(address)).ToCouchListAsync(cancellationToken))
-                {
-                    yield return application;
-                }
-            }
+            return (await GetDatabase()
+                .GetViewAsync(OpenIddictViews.Application<TApplication>.ClientId)
+                .ConfigureAwait(false))
+                .FirstOrDefault()
+                ?.Document;
         }
 
         /// <inheritdoc/>
@@ -180,13 +184,40 @@ namespace OpenIddict.CouchDB.Stores
 
             async IAsyncEnumerable<TApplication> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
             {
-                foreach (var application in await QueryDb().Where(app =>
-                    app.RedirectUris.Contains(address)).ToCouchListAsync(cancellationToken))
+                foreach (var row in await GetDatabase()
+                    .GetViewAsync(OpenIddictViews.Application<TApplication>.RedirectUris, new() { IncludeDocs = true }, cancellationToken)
+                    .ConfigureAwait(false))
                 {
-                    yield return application;
+                    yield return row.Document;
                 }
             }
         }
+
+        /// <inheritdoc/>
+        public virtual IAsyncEnumerable<TApplication> FindByPostLogoutRedirectUriAsync(
+            string address, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(address))
+            {
+                throw new ArgumentException(SR.GetResourceString(SR.ID0143), nameof(address));
+            }
+
+            return ExecuteAsync(cancellationToken);
+
+            async IAsyncEnumerable<TApplication> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+            {
+                foreach (var row in await GetDatabase()
+                    .GetViewAsync(OpenIddictViews.Application<TApplication>.PostLogoutRedirectUris, new() { IncludeDocs = true }, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    yield return row.Document;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Query
 
         /// <inheritdoc/>
         public virtual async ValueTask<TResult> GetAsync<TState, TResult>(
@@ -197,6 +228,48 @@ namespace OpenIddict.CouchDB.Stores
 
             return await query(QueryDb(), state).FirstOrDefaultAsync(cancellationToken);
         }
+
+        /// <inheritdoc/>
+        public virtual async IAsyncEnumerable<TApplication> ListAsync(
+            int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var options = new CouchViewOptions<string>
+            {
+                Reduce = false,
+                IncludeDocs = true,
+                Limit = count,
+                Skip = offset ?? 0
+            };
+
+            foreach (var row in await GetDatabase()
+                .GetViewAsync(OpenIddictViews.Application<TApplication>.Applications, options, cancellationToken)
+                .ConfigureAwait(false))
+            {
+                yield return row.Document;
+            }
+        }
+
+        /// <inheritdoc/>
+        public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(
+            Func<IQueryable<TApplication>, TState, IQueryable<TResult>> query,
+            TState state, CancellationToken cancellationToken)
+        {
+            Check.NotNull(query, nameof(query));
+
+            return ExecuteAsync(cancellationToken);
+
+            async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+            {
+                foreach (var element in await Task.Run(() => query(QueryDb(), state), cancellationToken))
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Get/Set
 
         /// <inheritdoc/>
         public virtual ValueTask<string?> GetClientIdAsync(TApplication application,
@@ -354,43 +427,6 @@ namespace OpenIddict.CouchDB.Stores
             {
                 return new ValueTask<TApplication>(Task.FromException<TApplication>(
                     new InvalidOperationException(SR.GetResourceString(SR.ID0240), exception)));
-            }
-        }
-
-        /// <inheritdoc/>
-        public virtual async IAsyncEnumerable<TApplication> ListAsync(
-            int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            var options = new CouchViewOptions<string>
-            {
-                Reduce = false,
-                IncludeDocs = true,
-                Limit = count,
-                Skip = offset ?? 0
-            };
-
-            foreach (var row in await GetDatabase()
-                .GetViewAsync(Views.Application<TApplication>.Applications, options, cancellationToken).ConfigureAwait(false))
-            {
-                yield return row.Document;
-            }
-        }
-
-        /// <inheritdoc/>
-        public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(
-            Func<IQueryable<TApplication>, TState, IQueryable<TResult>> query,
-            TState state, CancellationToken cancellationToken)
-        {
-            Check.NotNull(query, nameof(query));
-
-            return ExecuteAsync(cancellationToken);
-
-            async IAsyncEnumerable<TResult> ExecuteAsync([EnumeratorCancellation] CancellationToken cancellationToken)
-            {
-                foreach (var element in await Task.Run(() => query(QueryDb(), state), cancellationToken))
-                {
-                    yield return element;
-                }
             }
         }
 
@@ -568,21 +604,6 @@ namespace OpenIddict.CouchDB.Stores
             return default;
         }
 
-        /// <inheritdoc/>
-        public virtual async ValueTask UpdateAsync(TApplication application,
-            CancellationToken cancellationToken)
-        {
-            Check.NotNull(application, nameof(application));
-
-            var db = GetDatabase();
-            try
-            {
-                await db.AddOrUpdateAsync(application, cancellationToken: cancellationToken);
-            }
-            catch (CouchConflictException ex)
-            {
-                throw new OpenIddictExceptions.ConcurrencyException(SR.GetResourceString(SR.ID0239), ex);
-            }
-        }
+        #endregion
     }
 }
