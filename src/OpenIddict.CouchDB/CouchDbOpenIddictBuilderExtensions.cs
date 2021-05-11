@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
                    .ReplaceTokenStoreResolver<CouchDbOpenIddictTokenStoreResolver>(ServiceLifetime.Singleton);
 
             builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictApplicationStore<>));
-            builder.Services.TryAddSingleton(typeof(CouchDOpenIddictbAuthorizationStore<>));
+            builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictAuthorizationStore<>));
             builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictScopeStore<>));
             builder.Services.TryAddSingleton(typeof(CouchDbOpenIddictTokenStore<>));
 
