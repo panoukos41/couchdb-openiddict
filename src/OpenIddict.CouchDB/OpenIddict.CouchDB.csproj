@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="CouchDB.NET" Version="3.1.0" />
-    <PackageReference Include="OpenIddict.Core" Version="3.0.3" />
+    <PackageReference Include="OpenIddict.Core" Version="3.0.4" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 </Project>
