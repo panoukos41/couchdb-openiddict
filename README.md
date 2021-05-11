@@ -49,15 +49,21 @@ services.AddIdentity<CouchDbUser, CouchDbRole>()
             {
                 Document = "openiddict";
                 Application = "application";
+                ApplicationClientId = "application.client_id";
+                ApplicationRedirectUri = "application.redirect_uris";
+                ApplicationPostLogoutRedirectUri = "application.post_logout_redirect_uris";
                 Authorization = "authorization";
                 AuthorizationApplicationId = "authorization.application_id";
                 AuthorizationSubject = "authorization.subject";
                 AuthorizationPrune = "authorization.prune";
                 Scope = "scope";
                 ScopeName = "scope.name";
+                ScopeResources = "scope.resources";
                 Token = "token";
                 TokenApplicationId = "token.application_id";
                 TokenAuthorizationId = "token.authorization_id";
+                TokenReferenceId = "token.reference_id";
+                TokenSubject = "token.subject";
                 TokenPrune = "token.prune";
             })));
 ```
