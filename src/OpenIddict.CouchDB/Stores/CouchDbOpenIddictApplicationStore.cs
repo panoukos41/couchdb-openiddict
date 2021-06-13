@@ -164,8 +164,14 @@ namespace OpenIddict.CouchDB.Stores
                 throw new ArgumentException(SR.GetResourceString(SR.ID0195), nameof(identifier));
             }
 
+            var options = new CouchViewOptions<string>
+            {
+                Key = identifier,
+                IncludeDocs = true
+            };
+
             return (await GetDatabase()
-                .GetViewAsync(OpenIddictViews.Application<TApplication>.ClientId, new() { IncludeDocs = true }, cancellationToken)
+                .GetViewAsync(OpenIddictViews.Application<TApplication>.ClientId, options, cancellationToken)
                 .ConfigureAwait(false))
                 .FirstOrDefault()
                 ?.Document;
